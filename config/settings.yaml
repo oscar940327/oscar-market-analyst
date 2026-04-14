@@ -1,0 +1,79 @@
+# ============================
+# Oscar Market Analyst — 設定檔
+# ============================
+
+# 自選股池（15 檔）
+watchlist:
+  - TSLA
+  - GOOGL
+  - PLTR
+  - MU
+  - SNDK
+  - NVDA
+  - TSM
+  - RKLB
+  - SOFI
+  - AAPL
+  - META
+  - MSFT
+  - AMD
+  - AVGO
+  - CRWD
+
+# 股票名稱對照（提升新聞搜尋精度）
+ticker_names:
+  TSLA: "Tesla"
+  GOOGL: "Google Alphabet"
+  PLTR: "Palantir Technologies"
+  MU: "Micron Technology"
+  SNDK: "SanDisk"
+  NVDA: "NVIDIA"
+  TSM: "Taiwan Semiconductor TSMC"
+  RKLB: "Rocket Lab"
+  SOFI: "SoFi Technologies"
+  AAPL: "Apple"
+  META: "Meta Platforms"
+  MSFT: "Microsoft"
+  AMD: "AMD Advanced Micro Devices"
+  AVGO: "Broadcom"
+  CRWD: "CrowdStrike"
+
+# 資料管線設定
+data:
+  price_lookback_days: 730
+  news_search_days: 3
+
+# 回測設定
+backtest:
+  cash: 100000
+  commission: 0.001
+  start_date: "2024-01-01"
+
+# LLM 設定
+llm:
+  model: "openrouter/deepseek/deepseek-chat-v3-0324"
+  temperature: 0.1
+
+# 策略參數
+strategies:
+  breakout:
+    lookback: 20
+    sentiment_threshold: 0.3
+  sma_cross:
+    fast: 10
+    slow: 30
+    sentiment_threshold: 0.3
+  emergency:
+    event_severity_trigger: 0.8
+    sentiment_floor: -0.7
+
+# 資金控管
+risk:
+  max_position_pct: 0.10
+  max_total_exposure: 0.60
+  stop_loss_atr_multiplier: 2
+
+# 通知
+notification:
+  email_sender: "oscar940327@gmail.com"
+  email_receiver: "oscar940327@gmail.com"
