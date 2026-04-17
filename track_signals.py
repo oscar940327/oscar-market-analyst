@@ -131,9 +131,12 @@ def update_tracking_prices():
         try:
             df = yf.download(ticker, period="60d", progress=False)
             if not df.empty:
+                if hasattr(df.columns, 'levels'):
+                    df.columns = df.columns.get_level_values(0)
+                close_series = df["Close"]
                 price_cache[ticker] = {
-                    d.strftime("%Y-%m-%d"): float(row_data["Close"])
-                    for d, row_data in df.iterrows()
+                    d.strftime("%Y-%m-%d"): float(v)
+                    for d, v in close_series.items()
                 }
         except Exception as e:
             print(f"    {ticker}: fetch failed: {e}")

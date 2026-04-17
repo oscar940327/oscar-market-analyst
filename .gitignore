@@ -2,10 +2,13 @@ venv/
 __pycache__/
 *.pyc
 .env
-data/db/
+data/db/*
 data/cache/
 *.db
 outputs/
 logs/
 tests/
 report/
+.vscode/
+!data/db/market.db
+!data/signal_log.csv
