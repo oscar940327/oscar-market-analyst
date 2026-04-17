@@ -1,4 +1,3 @@
-cat > requirements.txt << 'EOF'
 backtrader>=1.9.78
 beautifulsoup4>=4.14
 litellm>=1.0
@@ -11,4 +10,3 @@ requests>=2.33
 transformers>=4.50
 torch>=2.1
 yfinance>=1.2
-EOF
