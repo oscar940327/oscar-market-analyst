@@ -24,3 +24,5 @@ date,ticker,signal,score,entry_price,price_5d,price_10d,price_20d,return_5d,retu
 2026-04-27,SNDK,BUY (持有),48,1035.72,,,,,,
 2026-04-29,SNDK,BUY (持有),56,1081.00,,,,,,
 2026-04-30,GOOGL,BUY (持有),48,371.24,,,,,,
+2026-05-01,AMD,BUY (買入),62,354.49,,,,,,
+2026-05-01,GOOGL,BUY (持有),54,384.80,,,,,,
