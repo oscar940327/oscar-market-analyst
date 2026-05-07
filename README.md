@@ -1,8 +1,6 @@
 # Oscar Market Analyst
 
-> A personal trading signal system combining technical analysis, LLM sentiment scoring, and regime-aware risk control.
-
-![Python](https://img.shields.io/badge/python-3.11+-blue) ![Status](https://img.shields.io/badge/status-active-brightgreen)
+> Event-driven market radar for detecting market-moving news, mapping events to affected tickers, confirming technical reaction, and sending focused email alerts.
 
 [中文版 README](./README_zh.md)
 
@@ -10,298 +8,340 @@
 
 ## Overview
 
-An end-to-end trading signal system for US equities that ingests price data, extracts sentiment from financial news using both LLM (DeepSeek V3) and FinBERT, runs multiple backtesting strategies, and generates daily HTML reports delivered via email.
+Oscar Market Analyst is being refactored from a stock-centered daily report and backtest project into an **Event-driven Market Radar**.
 
-The system was built to rigorously test whether **LLM-based sentiment signals improve a technical-analysis baseline**, and whether **regime-aware position sizing** reduces drawdown effectively. Both hypotheses were validated through a **4-year cross-bear-market backtest** on 14 large-cap US stocks.
+The current production direction is not automatic trading and not AI stock picking. The system is designed to:
 
-**Key technical choices:**
-- **Hybrid sentiment engine**: FinBERT for deterministic historical backfill, LLM for daily reports with human-readable reasoning
-- **Three comparison strategies**: Pure technical baseline (4a), sentiment-filtered (4b), regime-aware sizer (4c)
-- **Cross-bear validation**: Tested across 2022 bear market (SPY -25%) to avoid survivorship bias in bull-only data
+- scan free market news sources,
+- classify important market events with an LLM and deterministic keyword fallback,
+- map events to predefined market themes and related tickers,
+- check whether those tickers are technically reacting,
+- send email alerts only when there is something worth reviewing,
+- record every event and alert in SQLite,
+- track alert performance after 1 / 3 / 5 / 20 trading days.
 
----
-
-## Key Findings
-
-Three empirical findings drove major design pivots during development. Each finding represents a falsified hypothesis.
-
-![4-Year Cross-Bear-Market Comparison](docs/images/returns_comparison.png)
-
-### 1. LLM sentiment filtering hurts more than it helps
-
-A 4-year backtest across 14 stocks showed that adding LLM sentiment as an entry filter **reduced average returns by 37.65%** compared to the pure technical baseline. The "sentiment threshold" approach was abandoned in favor of "emergency-only" sentiment usage.
-
-| Strategy | Avg Return (4y) | Beats Baseline |
-|---|---|---|
-| 4a Baseline (pure technical) | **+114.48%** | — |
-| 4b + Sentiment filter | +76.83% | 4 / 14 |
-| 4c + Regime sizer | +53.07% | 2 / 14 |
-
-### 2. Regime sizing reduces drawdown but sacrifices returns
-
-![Return vs Drawdown Trade-off](docs/images/return_vs_drawdown.png)
-
-The market-regime-based position sizer (80% bull / 50% neutral / 20% bear) **reduced average max drawdown by 10.74 percentage points**, but at the cost of 61% lower cumulative returns. The regime system is slow to scale back up during bear-to-bull transitions, missing rebound rallies.
-
-| Strategy | Max Drawdown | Avg Return |
-|---|---|---|
-| 4a Baseline | -34.26% | +114.48% |
-| 4c + Regime sizer | **-23.53%** | +53.07% |
-
-### 3. LLM sentiment scoring is non-deterministic
-
-This finding was accidental. While debugging a different issue, I re-ran the exact same backfill twice — same model, same `temperature=0.1`, same news data, same prompts — and got average backtest returns differing by **3.61%** (one run gave +60%, the other +56%). Individual ticker results varied by up to 20%.
-
-The implication was uncomfortable: if identical runs produce different backtest results, then any "improvement" from LLM sentiment over baseline might be noise rather than signal. This invalidated several earlier experiments and forced a redesign.
-
-The resolution was a **hybrid engine**: FinBERT (deterministic, free, 100% reproducible) is used for the 4-year historical backfill where reasoning text is irrelevant, while LLM is retained for daily reports where human-readable reasoning helps the end user interpret signals.
+The old daily report and backtesting system is preserved as legacy research. Its main value is the technical-analysis logic, historical experiments, and evidence that naive LLM sentiment filters did not improve the trading strategy under robust testing.
 
 ---
 
-## Architecture
+## Current Status
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     Data Sources                         │
-│  yfinance · Polygon News · Tavily · SPY/VIX (regime)     │
-└────────────────────┬─────────────────────────────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │    perception/         │  ETL layer
-         │  - price_fetcher       │  Fetches OHLCV + news
-         │  - news_fetcher        │
-         │  - finbert_scorer      │  Historical (deterministic)
-         │  - llm_scorer          │  Daily (reasoning-rich)
-         │  - market_regime       │  Bull/Neutral/Bear
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     pipeline/          │  Storage & orchestration
-         │  - db.py (SQLite)      │
-         │  - etl.py              │  Daily ETL
-         │  - backfill_*.py       │  One-time historical backfills
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │      engine/           │  Backtesting
-         │  - strategies/         │  4a, 4b, 4c strategies
-         │  - feeds/              │  Custom Backtrader data feed
-         │  - runner.py           │  Backtrader orchestrator
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     analyzer/          │  Decision support
-         │  - composite_scorer    │  6-dimension scoring (0-100)
-         │  - price_levels        │  Entry/stop/target prices
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     pipeline/          │  Output layer
-         │  - signal_scanner.py   │  Today's signals
-         │  - report_builder.py   │  HTML report
-         │  - email_sender.py     │  Gmail SMTP
-         └────────────────────────┘
-                     │
-                     ▼
-              Daily Email Report
-```
+The Event Radar MVP is implemented and automated.
+
+Completed:
+
+- RSS news scanner.
+- Keyword theme matching.
+- OpenRouter LLM event classifier with fixed JSON output.
+- Deterministic `theme_map.yaml` theme-to-ticker mapping.
+- SQLite tables for market events, radar alerts, alert performance, and trend states.
+- Technical confirmation using 20/55-day breakout, MA20, volume ratio, and relative strength versus SPY / QQQ.
+- Event Alert email format.
+- Trend state management: Active / Cooling / Closed.
+- Trend Alert preview and optional sending.
+- Performance tracking and summary commands.
+- GitHub Actions automation.
+- Unit tests for core Event Radar behavior.
+
+Current automation:
+
+- Runs on GitHub Actions Monday-Friday at Taiwan 20:30.
+- Updates prices and scans news.
+- Sends **Event Alert** emails when new confirmed or partial alerts exist.
+- Updates Trend state, but does **not** automatically send Trend Alert emails.
+- Updates alert performance when enough trading days have passed.
+- Commits updated radar state back to the repository database.
 
 ---
 
-## Tech Stack
+## What Gets Emailed
 
-| Layer | Technology | Reason |
-|---|---|---|
-| Language | Python 3.11+ | Data science ecosystem |
-| Data storage | SQLite | Zero-config, adequate for single-user system |
-| Backtesting | Backtrader | Mature event-driven framework with custom data feed support |
-| LLM provider | OpenRouter + DeepSeek V3 | Cost-effective, reasoning-capable |
-| Sentiment backfill | ProsusAI/FinBERT (HuggingFace) | Deterministic, finance-tuned, no API cost |
-| News source | Polygon.io | 2+ years historical coverage for US equities |
-| Daily news | Tavily API | Recent news search with good signal extraction |
-| Price data | yfinance | Free, reliable OHLCV |
-| Market regime | SPY + VIX | Standard broad-market regime proxies |
-| Reporting | HTML + Gmail SMTP | Zero infrastructure cost |
+### Event Alert
 
----
+An Event Alert is sent when:
 
-## Experimental Results
+1. a news item matches a market theme,
+2. the theme maps to related tickers,
+3. a related ticker has enough technical confirmation,
+4. the alert has not already been sent.
 
-![TSLA Case Study](docs/images/tsla_bear_market_case.png)
+The email contains:
 
-### Cross-Bear-Market Comparison (2022-01 to 2026-04, 14 stocks)
+- ticker,
+- theme,
+- priority: `High Priority` or `Watchlist`,
+- technical status: `confirmed` or `partial`,
+- source news title and link,
+- close price,
+- relative strength,
+- volume ratio,
+- alert reason,
+- reference stop-loss / take-profit / trailing-stop levels.
 
-| Ticker | 4a Baseline | 4b +Sent | 4c +Regime | Buy & Hold |
-|---|---:|---:|---:|---:|
-| TSLA | +72.65% | +26.98% | +39.56% | -12.75% |
-| GOOGL | -8.91% | +23.60% | -1.69% | +118.80% |
-| PLTR | +67.57% | +27.70% | +7.37% | +591.10% |
-| MU | +67.68% | +98.29% | +42.96% | +339.26% |
-| NVDA | +208.15% | +1.96% | -15.12% | +526.24% |
-| TSM | +81.87% | +0.54% | -5.57% | +187.73% |
-| RKLB | +399.75% | +370.32% | +269.33% | +457.79% |
-| SOFI | +20.37% | -5.83% | +4.56% | +3.44% |
-| AAPL | +30.51% | +19.64% | +9.22% | +43.11% |
-| META | +97.33% | -11.47% | -29.25% | +86.05% |
-| MSFT | +22.86% | +14.38% | -12.02% | +10.79% |
-| AMD | +27.12% | +52.70% | +59.96% | +63.10% |
-| AVGO | +112.14% | +52.33% | +49.50% | +460.14% |
-| CRWD | +10.05% | -15.98% | -14.66% | +91.11% |
-| **Average** | **+114.48%** | +76.83% | +53.07% | +371.44% |
+### Trend Alert
 
-### Interpretation
+Trend Alerts are currently **not sent automatically**. They are updated and can be previewed manually.
 
-- **TSLA case study**: Over the 4-year window, buy-and-hold produced **-12.75%** while the technical baseline produced **+72.65%** — demonstrating that the system adds value in bearish conditions.
-- **4c regime sizer trade-off**: While it reduces average max drawdown from -34.26% to -23.53% (-10.74pp improvement), it underperforms on returns because it scales down position size during the bear-to-bull transition, missing rebound rallies.
-- **4a baseline selection**: Based on 14-stock cross-bear results, the production system uses 4a baseline with sentiment-only-for-emergency-exit. This matches the findings of Liu et al. (2025) in [FINSABER](https://arxiv.org/abs/2505.07078), which noted that LLM-based strategies deteriorate under robust long-term testing.
+Trend state can become:
 
----
+- `Active`: theme/ticker is still worth tracking.
+- `Cooling`: multiple weakening signals are present.
+- `Closed`: stronger end-of-trend conditions are present.
 
-## Installation & Usage
+Cooling currently requires multiple signals, such as:
 
-### Requirements
+- below MA20,
+- underperforming SPY / QQQ over 20 days,
+- drawdown from high,
+- no related alerts for several days.
 
-- Python 3.11+
-- ~1 GB disk space (for FinBERT model + historical data)
-- API keys: Polygon, Tavily, OpenRouter, Gmail (for email sending)
-
-### Setup
+Preview Trend Alerts:
 
 ```bash
-git clone https://github.com/oscar940327/oscar-market-analyst.git
-cd oscar-market-analyst
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-# Copy the example env and fill in your API keys
-cp config/.env.example config/.env
-# Edit config/.env with POLYGON_API_KEY, TAVILY_API_KEY, OPENROUTER_API_KEY, GMAIL_*
+python -m event_radar.cli --send-trend-alerts --dry-run
 ```
 
-### Configure your watchlist
+Send Trend Alerts manually:
 
-Edit `config/settings.yaml`:
+```bash
+python -m event_radar.cli --send-trend-alerts
+```
+
+---
+
+## Daily Usage
+
+Run the full daily radar locally without sending email:
+
+```bash
+python -m event_radar.cli --run-daily --max-events 30
+```
+
+Run and send Event Alert emails if any exist:
+
+```bash
+python -m event_radar.cli --run-daily --max-events 30 --send-email-alerts
+```
+
+Update trend states without sending Trend Alert emails:
+
+```bash
+python -m event_radar.cli --update-trends
+```
+
+Update alert performance:
+
+```bash
+python -m event_radar.cli --update-performance
+```
+
+Summarize performance by theme:
+
+```bash
+python -m event_radar.cli --performance-summary --summary-horizon 5 --summary-group-by theme
+```
+
+---
+
+## GitHub Actions
+
+The Event Radar workflow is defined in:
+
+```text
+.github/workflows/event_radar.yml
+```
+
+Required GitHub Actions secrets:
+
+```text
+OPENROUTER_API_KEY
+GMAIL_SENDER
+GMAIL_RECEIVER
+GMAIL_APP_PASSWORD
+```
+
+Manual workflow testing:
+
+1. Go to GitHub Actions.
+2. Select `Event radar`.
+3. Click `Run workflow`.
+4. Use `send_email=false` for a dry operational check.
+5. Use `send_email=true` only when email sending should be enabled.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/oscar940327/personal-market-analysis.git
+cd personal-market-analysis
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Create local environment file:
+
+```bash
+cp config/.env.example config/.env
+```
+
+Fill in:
+
+```text
+OPENROUTER_API_KEY
+GMAIL_SENDER
+GMAIL_RECEIVER
+GMAIL_APP_PASSWORD
+```
+
+---
+
+## Configuration
+
+Event Radar config:
+
+```text
+config/event_radar.yaml
+```
+
+Theme-to-ticker map:
+
+```text
+config/theme_map.yaml
+```
+
+Important trend settings:
 
 ```yaml
-watchlist:
-  - TSLA
-  - NVDA
-  - AAPL
-  # ... up to 15 tickers
+trend_management:
+  cooling_no_news_days: 5
+  closed_no_news_days: 20
+  cooling_drawdown_pct: 0.08
+  closed_drawdown_pct: 0.15
+  cooling_min_signals: 2
+  closed_min_signals: 2
 ```
 
-### Daily workflow
-
-```bash
-# Run daily ETL + scan + HTML report + email
-python pipeline/daily_report.py
-
-# Preview only (no email)
-python pipeline/daily_report.py --preview
-```
-
-### Run backtests
-
-```bash
-# Three-way strategy comparison across the watchlist
-python tests/test_phase4c_comparison.py
-```
-
-### Historical backfill (one-time setup)
-
-```bash
-# Backfill 4 years of price data
-python pipeline/backfill_prices.py
-
-# Backfill sentiment using FinBERT (free, ~30 min)
-python pipeline/backfill_sentiment.py --engine finbert --from 2022-01-01 --to 2025-03-31
-
-# Backfill market regime
-python pipeline/backfill_regime.py
-```
+Increase `cooling_min_signals` if Trend state is still too noisy. Decrease it if the system is too slow to flag weakening themes.
 
 ---
 
 ## Project Structure
 
-```
-oscar-market-analyst/
-├── analyzer/              # Composite scoring & price levels
-│   ├── composite_scorer.py    # 6-dimension technical scoring (0-100)
-│   └── price_levels.py        # Entry / stop / target calculation
-├── config/
-│   ├── .env                   # API keys (gitignored)
-│   └── settings.yaml          # Watchlist & thresholds
-├── data/db/market.db          # SQLite database
-├── engine/                # Backtesting engine
-│   ├── feeds/
-│   │   └── sentiment_feed.py  # Custom Backtrader data feed
-│   ├── strategies/
-│   │   ├── breakout.py            # 4a baseline (production)
-│   │   ├── breakout_sentiment.py  # 4b experimental
-│   │   └── breakout_v2.py         # 4c experimental
-│   └── runner.py
-├── perception/            # Data ingestion & scoring
-│   ├── price_fetcher.py       # yfinance
-│   ├── news_fetcher.py        # Tavily (daily)
-│   ├── historical_news_fetcher.py  # Polygon (backfill)
-│   ├── llm_scorer.py          # DeepSeek V3 via OpenRouter
-│   ├── finbert_scorer.py      # HuggingFace FinBERT
-│   └── market_regime.py       # SPY + VIX regime classification
-├── pipeline/              # Orchestration & output
-│   ├── db.py                  # SQLite interface
-│   ├── etl.py                 # Daily ETL
-│   ├── backfill_prices.py
-│   ├── backfill_sentiment.py
-│   ├── backfill_regime.py
-│   ├── signal_scanner.py      # Today's signal detection
-│   ├── report_builder.py      # HTML report generation
-│   ├── email_sender.py        # Gmail SMTP
-│   └── daily_report.py        # Main entry point
-├── tests/
-│   └── test_phase4c_comparison.py  # Three-way backtest
-└── requirements.txt
+```text
+event_radar/
+  cli.py                      # Main Event Radar CLI
+  config.py                   # YAML config loading
+  email_alert.py              # Event and Trend email rendering/sending
+  llm_classifier.py           # OpenRouter LLM classification
+  models.py                   # Data models
+  performance.py              # Alert performance tracking and summaries
+  price_update.py             # yfinance price updates
+  repository.py               # SQLite persistence
+  rss_scanner.py              # RSS ingestion
+  service.py                  # Event classification and alert draft creation
+  technical_confirmation.py   # Breakout / MA / volume / RS confirmation
+  theme_mapper.py             # Keyword theme matching
+  trends.py                   # Active / Cooling / Closed trend states
+
+config/
+  event_radar.yaml            # Radar thresholds and RSS sources
+  theme_map.yaml              # Market themes and related tickers
+  .env.example                # Local environment template
+
+pipeline/
+  db.py                       # Shared SQLite price database helpers
+  email_sender.py             # Gmail SMTP helper
+
+tests/
+  test_event_radar.py         # Event Radar unit tests
 ```
 
----
+Legacy backtest and daily report modules still exist in:
 
-## Design Decisions
+```text
+analyzer/
+engine/
+perception/
+pipeline/
+```
 
-A selection of non-obvious engineering decisions.
-
-1. **Hybrid sentiment engine (FinBERT + LLM)** — FinBERT was chosen for historical backfill after discovering LLM non-determinism (3.61% result variance between identical runs). LLM is retained for daily reports to preserve human-readable reasoning.
-
-2. **Cross-bear-market testing** — Bull-only backtesting was rejected because the FINSABER paper (Liu et al., 2025) demonstrated that LLM strategies deteriorate under robust testing. 2022 data was backfilled specifically to include a bear market regime.
-
-3. **Multi-dimensional news search rolled back** — An earlier version of the news fetcher split searches across 5 structured dimensions (earnings / analyst opinion / risk events / industry / latest) and used round-robin selection to feed the LLM. The intuition was that structured inputs would yield better sentiment signals than a single generic query. The intuition was wrong. A direct comparison showed the multi-dimensional version produced **-3.46% lower average returns** than the single-query version on the same watchlist. After some analysis, the likely cause is that round-robin selection dilutes extreme signals — a day with one earnings beat and four neutral stories gets averaged into a weaker signal than a single query would capture. The simpler approach was restored and the multi-dimensional branch was abandoned.
-
-4. **Regime sizer kept as experimental, not production** — Despite reducing drawdown by 10.74 percentage points, 4c underperforms on cumulative returns in 12 of 14 stocks. The production system uses 4a baseline with sentiment-emergency-exit only.
-
-5. **SQLite for storage** — Chosen over PostgreSQL because this is a single-user system with modest data volume (~30k rows). Zero operational overhead; all data is in one file.
+Those are retained for research and reference. The intended long-term direction is for `main` to focus on Event Radar, while legacy backtest/report code remains available on the `legacy-backtest` branch.
 
 ---
 
-## Future Work
+## Tests
 
-**Walk-forward validation** is the most important outstanding item. The current 4-year backtest uses the entire window as a single test period. A proper walk-forward protocol would split the data into a training window (e.g., 2022-2024) for strategy selection and parameter tuning, then evaluate on a held-out window (2025-2026) to measure whether the chosen configuration generalizes out-of-sample.
+Run Event Radar tests:
 
-This matters because the current production choice (4a baseline) was made after observing results on the full window — which introduces a mild form of lookahead. A walk-forward test would either validate this choice or surface that some other configuration performs better under stricter methodology. The FINSABER paper (Liu et al., 2025) demonstrates that many LLM-based strategies collapse under this kind of stricter testing, so applying the same protocol here would be a natural next step.
+```bash
+python -m unittest tests.test_event_radar
+```
+
+The tests cover:
+
+- keyword theme matching,
+- alert draft generation,
+- email deduplication,
+- event and alert persistence deduplication,
+- technical confirmation,
+- trend alert deduplication,
+- performance summary,
+- stricter multi-signal Trend Cooling rules.
 
 ---
 
-## References
+## Legacy Research Summary
 
-- Liu, S., et al. (2025). *FINSABER: Financial Strategy Adaptation Benchmark Evaluating Robustness*. arXiv:2505.07078.
-- Araci, D. (2019). *FinBERT: Financial Sentiment Analysis with Pre-trained Language Models*. arXiv:1908.10063.
+Before the Event Radar pivot, this project tested whether LLM sentiment improved a technical breakout strategy.
+
+Key findings:
+
+- A pure technical breakout baseline outperformed sentiment-filtered variants in the 4-year cross-bear-market test.
+- Regime sizing reduced drawdown but sacrificed too much return.
+- LLM sentiment scoring was not deterministic enough for historical backtesting.
+- FinBERT remained useful for deterministic historical sentiment backfill, while LLMs are better suited for current event interpretation and human-readable reasoning.
+
+The resulting design decision:
+
+```text
+Use LLMs to understand market events, not to directly decide trades.
+Use technical confirmation to verify whether related tickers are actually reacting.
+```
 
 ---
 
-## Author
+## Remaining Work
 
-[@<github-oscar940327](https://github.com/oscar940327)
+The project is usable, but not fully finished.
+
+Near-term:
+
+- Observe Event Alert quality for several trading days.
+- Review false positives and missed themes.
+- Tune `theme_map.yaml` and alert priority thresholds.
+- Decide whether Trend Alert emails should remain manual or become automated later.
+- Confirm `legacy-backtest` is pushed to GitHub as a remote branch.
+
+Medium-term:
+
+- Build performance review reports from accumulated alert outcomes.
+- Rank themes by post-alert return and benchmark-relative return.
+- Rank technical conditions by usefulness.
+- Add optional weekly summary email.
+- Add more reliable news sources if RSS quality is insufficient.
+
+Long-term:
+
+- Clean `main` so it is primarily Event Radar focused.
+- Keep old daily report/backtest code in `legacy-backtest`.
+- Add an Archived trend state.
+- Add richer event taxonomy and better duplicate-event clustering.
+- Validate whether Event Radar alerts produce useful research leads over time.
 
 ---
 
-## License
+## Disclaimer
 
-MIT License — see [LICENSE](./LICENSE) for details.
+This project is a personal market research and alerting tool. It does not make automatic trading decisions and is not financial advice.

@@ -1,8 +1,6 @@
 # Oscar Market Analyst
 
-> 結合技術分析、LLM 情緒評分與大盤狀態風控的個人交易訊號系統。
-
-![Python](https://img.shields.io/badge/python-3.11+-blue) ![Status](https://img.shields.io/badge/status-active-brightgreen)
+> 事件驅動的市場雷達：掃描可能影響市場的新聞，對應受影響股票，確認技術面是否真的反應，最後只寄出值得研究的 Email alert。
 
 [English README](./README.md)
 
@@ -10,296 +8,340 @@
 
 ## 專案概述
 
-這是一套針對美股的端對端交易訊號系統。流程涵蓋價格資料擷取、金融新聞情緒評分（同時使用 LLM DeepSeek V3 與 FinBERT 兩種引擎）、多策略回測、以及每日 HTML 報告的自動產生與 email 推送。
+Oscar Market Analyst 正在從「股票為中心的每日報告 / 回測系統」重構成 **Event-driven Market Radar：事件驅動市場雷達**。
 
-專案的核心目標是嚴謹驗證兩個假設：**LLM 情緒訊號是否能改善純技術面基準策略**、以及 **大盤狀態感知的動態倉位是否能有效降低回撤**。兩個假設都透過 **橫跨 4 年、包含 2022 熊市的 14 檔美股回測** 來驗證。
+目前正式方向不是自動交易，也不是 AI 自動選股。這套系統的目標是：
 
-**關鍵技術選擇：**
-- **混搭情緒引擎**：FinBERT 負責歷史回填（決定性輸出），LLM 負責每日報告（保留可讀的推理文字）
-- **三種策略對照**：純技術面基準（4a）、情緒過濾版（4b）、大盤狀態倉位版（4c）
-- **跨熊市驗證**：測試範圍涵蓋 2022 熊市（SPY 下跌 25%），避免只用牛市資料產生的倖存者偏誤
+- 掃描免費市場新聞來源，
+- 用 LLM 與 deterministic keyword fallback 判斷重要市場事件，
+- 把事件對應到預先定義好的市場主題與相關股票，
+- 檢查相關股票的技術面是否真的開始反應，
+- 只有有值得研究的 alert 時才寄 email，
+- 將每個 event / alert 記錄到 SQLite，
+- 追蹤 alert 後 1 / 3 / 5 / 20 個交易日的績效。
 
----
-
-## 核心發現
-
-開發過程中有三個實驗發現促成了設計轉向。每個發現都代表一個被證偽的假設。
-
-![4-Year Cross-Bear-Market Comparison](docs/images/returns_comparison.png)
-
-### 1. LLM 情緒過濾弊大於利
-
-4 年、14 檔美股的回測顯示，把 LLM 情緒當作進場過濾條件，平均報酬比純技術面基準 **低 37.65%**。原本的「sentiment threshold」設計被廢除，改成只在極端值觸發的「緊急平倉」用途。
-
-| 策略 | 平均 4 年報酬 | 勝過基準 |
-|---|---|---|
-| 4a 基準（純技術面） | **+114.48%** | — |
-| 4b + 情緒過濾 | +76.83% | 4 / 14 |
-| 4c + 大盤狀態倉位 | +53.07% | 2 / 14 |
-
-### 2. 大盤狀態倉位降低回撤，但犧牲了報酬
-
-![Return vs Drawdown Trade-off](docs/images/return_vs_drawdown.png)
-
-基於大盤狀態的動態倉位（牛市 80% / 中性 50% / 熊市 20%）確實讓平均最大回撤 **降低了 10.74 個百分點**，但同時也讓累積報酬減少 61%。Regime 系統在「熊市轉牛市」的轉折期反應太慢，錯過了反彈的主要段落。
-
-| 策略 | 最大回撤 | 平均報酬 |
-|---|---|---|
-| 4a 基準 | -34.26% | +114.48% |
-| 4c + 大盤狀態倉位 | **-23.53%** | +53.07% |
-
-### 3. LLM 情緒評分並非決定性輸出
-
-這個發現是意外撞到的。當時我在 debug 另一個問題，不小心把同一份歷史回填跑了兩次——同樣的模型、同樣的 `temperature=0.1`、同樣的新聞資料、同樣的 prompt——結果兩次的平均回測報酬出現了明顯差距，個別股票的差距更大。差距大到足以推翻我之前歸因於「情緒過濾有效」的結論。
-
-這個結果讓我不得不重新設計：既然「相同輸入 → 不同輸出」，那之前用 LLM 情緒跑出來的所有對照實驗都需要重跑。最後的解法是**混搭引擎**：FinBERT（決定性、免費、100% 可重現）負責 4 年歷史回填，LLM 則保留在每日報告，因為每日報告需要人類可讀的推理文字來幫助使用者理解訊號。
+舊版 daily report / backtest 系統仍保留為 legacy research。它的價值在於技術分析邏輯、歷史實驗紀錄，以及證明「單純把 LLM sentiment 當進場過濾」在嚴格測試下沒有改善策略。
 
 ---
 
-## 系統架構
+## 目前狀態
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                      資料來源                            │
-│  yfinance · Polygon News · Tavily · SPY/VIX（regime）    │
-└────────────────────┬─────────────────────────────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │    perception/         │  資料擷取層
-         │  - price_fetcher       │  抓 OHLCV 和新聞
-         │  - news_fetcher        │
-         │  - finbert_scorer      │  歷史回填（決定性）
-         │  - llm_scorer          │  每日報告（有推理文字）
-         │  - market_regime       │  Bull/Neutral/Bear
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     pipeline/          │  儲存與編排
-         │  - db.py (SQLite)      │
-         │  - etl.py              │  每日 ETL
-         │  - backfill_*.py       │  一次性歷史回填
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │      engine/           │  回測引擎
-         │  - strategies/         │  4a、4b、4c 三個策略
-         │  - feeds/              │  Backtrader 自訂 data feed
-         │  - runner.py           │  Backtrader 主流程
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     analyzer/          │  決策輔助
-         │  - composite_scorer    │  6 維度綜合評分（0-100）
-         │  - price_levels        │  理想買入 / 停損 / 目標價
-         └───────────┬────────────┘
-                     │
-         ┌───────────▼────────────┐
-         │     pipeline/          │  輸出層
-         │  - signal_scanner.py   │  今日訊號掃描
-         │  - report_builder.py   │  HTML 報告
-         │  - email_sender.py     │  Gmail SMTP
-         └────────────────────────┘
-                     │
-                     ▼
-                每日 Email 報告
-```
+Event Radar MVP 已經完成並自動化。
+
+已完成：
+
+- RSS 新聞掃描器。
+- Keyword theme matching。
+- OpenRouter LLM event classifier，固定 JSON 輸出。
+- `theme_map.yaml` deterministic theme-to-ticker 對照表。
+- SQLite tables：market events、radar alerts、alert performance、trend states。
+- 技術確認：20/55 日突破、MA20、成交量倍數、相對 SPY / QQQ 強弱。
+- Event Alert email 格式。
+- Trend state 管理：Active / Cooling / Closed。
+- Trend Alert preview 與手動寄送。
+- Alert performance tracking 與 summary command。
+- GitHub Actions 自動化。
+- Event Radar 核心單元測試。
+
+目前自動化流程：
+
+- GitHub Actions 週一到週五台灣時間 20:30 自動執行。
+- 更新價格並掃描新聞。
+- 有新的 confirmed / partial Event Alert 時才寄 email。
+- 更新 Trend state，但 **不自動寄 Trend Alert email**。
+- 當交易日數足夠時更新 alert performance。
+- 將 radar state 寫回 repo 的 SQLite database。
 
 ---
 
-## 技術棧
+## 什麼情況會寄信
 
-| 層級 | 技術 | 選用原因 |
-|---|---|---|
-| 語言 | Python 3.11+ | 資料科學生態成熟 |
-| 資料儲存 | SQLite | 零設定、足夠單人系統使用 |
-| 回測框架 | Backtrader | 成熟的事件驅動框架，支援自訂 data feed |
-| LLM 提供者 | OpenRouter + DeepSeek V3 | 成本低廉、具備推理能力 |
-| 情緒回填引擎 | ProsusAI/FinBERT（HuggingFace） | 決定性輸出、金融領域 fine-tune、零 API 成本 |
-| 歷史新聞來源 | Polygon.io | 美股擁有 2 年以上歷史新聞 |
-| 每日新聞來源 | Tavily API | 近期新聞搜尋、訊號擷取效果好 |
-| 價格資料 | yfinance | 免費、穩定的 OHLCV |
-| 大盤狀態判斷 | SPY + VIX | 業界標準的大盤 regime 代理指標 |
-| 報告產出 | HTML + Gmail SMTP | 零基礎設施成本 |
+### Event Alert
 
----
+Event Alert 會在以下條件成立時寄出：
 
-## 實驗結果
+1. 新聞符合某個市場主題，
+2. 該主題能對應到相關股票，
+3. 相關股票有足夠技術確認，
+4. 這個 alert 還沒有寄過。
 
-![TSLA Case Study](docs/images/tsla_bear_market_case.png)
+Email 內容包含：
 
-### 跨熊市對照測試（2022-01 至 2026-04，14 檔美股）
+- 股票代號，
+- 主題，
+- 優先級：`High Priority` 或 `Watchlist`，
+- 技術狀態：`confirmed` 或 `partial`，
+- 來源新聞標題與連結，
+- 收盤價，
+- 相對強弱，
+- 成交量倍數，
+- alert reason，
+- 參考停損 / 止盈 / trailing stop。
 
-| Ticker | 4a 基準 | 4b +情緒 | 4c +Regime | Buy & Hold |
-|---|---:|---:|---:|---:|
-| TSLA | +72.65% | +26.98% | +39.56% | -12.75% |
-| GOOGL | -8.91% | +23.60% | -1.69% | +118.80% |
-| PLTR | +67.57% | +27.70% | +7.37% | +591.10% |
-| MU | +67.68% | +98.29% | +42.96% | +339.26% |
-| NVDA | +208.15% | +1.96% | -15.12% | +526.24% |
-| TSM | +81.87% | +0.54% | -5.57% | +187.73% |
-| RKLB | +399.75% | +370.32% | +269.33% | +457.79% |
-| SOFI | +20.37% | -5.83% | +4.56% | +3.44% |
-| AAPL | +30.51% | +19.64% | +9.22% | +43.11% |
-| META | +97.33% | -11.47% | -29.25% | +86.05% |
-| MSFT | +22.86% | +14.38% | -12.02% | +10.79% |
-| AMD | +27.12% | +52.70% | +59.96% | +63.10% |
-| AVGO | +112.14% | +52.33% | +49.50% | +460.14% |
-| CRWD | +10.05% | -15.98% | -14.66% | +91.11% |
-| **平均** | **+114.48%** | +76.83% | +53.07% | +371.44% |
+### Trend Alert
 
-### 結果解讀
+Trend Alert 目前 **不會自動寄信**。系統會更新狀態，需要時可以手動 preview。
 
-- **TSLA 個案**：4 年下來 Buy & Hold 是 **-12.75%**，而技術面基準策略是 **+72.65%**——這證明系統在熊市環境下真的有價值。
-- **4c 大盤狀態倉位的取捨**：最大回撤從 -34.26% 降到 -23.53%（改善 10.74 個百分點），但累積報酬比基準少很多。原因是 regime 系統在「熊市轉牛市」的轉折期仍保持減倉，錯過了反彈的最大段。
-- **最終採用 4a 基準**：根據這份跨熊市測試的結果，正式環境使用 4a 基準 + 只在極端值觸發的緊急平倉。這個選擇與 Liu 等人（2025）在 [FINSABER](https://arxiv.org/abs/2505.07078) 論文中的發現一致——該論文指出 LLM 類策略在嚴謹的長期測試下常會失去優勢。
+Trend state 分為：
 
----
+- `Active`：這個 theme/ticker 仍值得追蹤。
+- `Cooling`：多個轉弱訊號同時出現。
+- `Closed`：出現更強的趨勢結束條件。
 
-## 安裝與使用
+Cooling 目前需要多個訊號，例如：
 
-### 環境需求
+- 跌破 MA20，
+- 最近 20 天跑輸 SPY / QQQ，
+- 從高點回撤，
+- 多天沒有新的相關 alert。
 
-- Python 3.11+
-- 約 1 GB 硬碟空間（FinBERT 模型 + 歷史資料）
-- API keys：Polygon、Tavily、OpenRouter、Gmail（用來寄信）
-
-### 安裝步驟
+預覽 Trend Alert，不寄信：
 
 ```bash
-git clone https://github.com/oscar940327/oscar-market-analyst.git
-cd oscar-market-analyst
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-# 複製環境變數範本並填入 API keys
-cp config/.env.example config/.env
-# 在 config/.env 裡填入 POLYGON_API_KEY、TAVILY_API_KEY、OPENROUTER_API_KEY、GMAIL_*
+python -m event_radar.cli --send-trend-alerts --dry-run
 ```
 
-### 設定 watchlist
+手動寄出 Trend Alert：
 
-編輯 `config/settings.yaml`：
+```bash
+python -m event_radar.cli --send-trend-alerts
+```
+
+---
+
+## 每日使用方式
+
+本機跑完整 daily radar，但不寄信：
+
+```bash
+python -m event_radar.cli --run-daily --max-events 30
+```
+
+本機跑 daily radar，若有 Event Alert 則寄信：
+
+```bash
+python -m event_radar.cli --run-daily --max-events 30 --send-email-alerts
+```
+
+更新 Trend state，不寄 Trend Alert：
+
+```bash
+python -m event_radar.cli --update-trends
+```
+
+更新 alert performance：
+
+```bash
+python -m event_radar.cli --update-performance
+```
+
+依 theme 統計 performance：
+
+```bash
+python -m event_radar.cli --performance-summary --summary-horizon 5 --summary-group-by theme
+```
+
+---
+
+## GitHub Actions
+
+Event Radar workflow：
+
+```text
+.github/workflows/event_radar.yml
+```
+
+需要設定的 GitHub Actions secrets：
+
+```text
+OPENROUTER_API_KEY
+GMAIL_SENDER
+GMAIL_RECEIVER
+GMAIL_APP_PASSWORD
+```
+
+手動測試 workflow：
+
+1. 到 GitHub Actions。
+2. 選 `Event radar`。
+3. 點 `Run workflow`。
+4. 用 `send_email=false` 做不寄信測試。
+5. 只有要測試寄信時才用 `send_email=true`。
+
+---
+
+## 安裝
+
+```bash
+git clone https://github.com/oscar940327/personal-market-analysis.git
+cd personal-market-analysis
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+建立本機環境變數檔：
+
+```bash
+cp config/.env.example config/.env
+```
+
+填入：
+
+```text
+OPENROUTER_API_KEY
+GMAIL_SENDER
+GMAIL_RECEIVER
+GMAIL_APP_PASSWORD
+```
+
+---
+
+## 設定
+
+Event Radar 設定：
+
+```text
+config/event_radar.yaml
+```
+
+主題與股票對照表：
+
+```text
+config/theme_map.yaml
+```
+
+重要 trend 設定：
 
 ```yaml
-watchlist:
-  - TSLA
-  - NVDA
-  - AAPL
-  # 最多 15 檔
+trend_management:
+  cooling_no_news_days: 5
+  closed_no_news_days: 20
+  cooling_drawdown_pct: 0.08
+  closed_drawdown_pct: 0.15
+  cooling_min_signals: 2
+  closed_min_signals: 2
 ```
 
-### 每日流程
-
-```bash
-# 跑完整的每日 ETL + 掃描 + HTML 報告 + 寄信
-python pipeline/daily_report.py
-
-# 只預覽，不寄信
-python pipeline/daily_report.py --preview
-```
-
-### 執行回測
-
-```bash
-# 三策略對照回測
-python tests/test_phase4c_comparison.py
-```
-
-### 歷史資料回填（一次性設定）
-
-```bash
-# 回填 4 年的價格資料
-python pipeline/backfill_prices.py
-
-# 用 FinBERT 回填情緒（免費、約 30 分鐘）
-python pipeline/backfill_sentiment.py --engine finbert --from 2022-01-01 --to 2025-03-31
-
-# 回填大盤 regime
-python pipeline/backfill_regime.py
-```
+如果 Trend state 還是太吵，可以提高 `cooling_min_signals`。如果覺得系統太慢才標記轉弱，可以降低它。
 
 ---
 
 ## 專案結構
 
-```
-oscar-market-analyst/
-├── analyzer/              # 綜合評分與操作參考價位
-│   ├── composite_scorer.py    # 6 維度技術評分（0-100）
-│   └── price_levels.py        # 買入 / 停損 / 目標價計算
-├── config/
-│   ├── .env                   # API keys（gitignored）
-│   └── settings.yaml          # Watchlist 與參數
-├── data/db/market.db          # SQLite 資料庫
-├── engine/                # 回測引擎
-│   ├── feeds/
-│   │   └── sentiment_feed.py  # Backtrader 自訂 data feed
-│   ├── strategies/
-│   │   ├── breakout.py            # 4a 基準（正式使用）
-│   │   ├── breakout_sentiment.py  # 4b 實驗
-│   │   └── breakout_v2.py         # 4c 實驗
-│   └── runner.py
-├── perception/            # 資料擷取與評分
-│   ├── price_fetcher.py       # yfinance
-│   ├── news_fetcher.py        # Tavily（每日）
-│   ├── historical_news_fetcher.py  # Polygon（歷史回填）
-│   ├── llm_scorer.py          # DeepSeek V3 via OpenRouter
-│   ├── finbert_scorer.py      # HuggingFace FinBERT
-│   └── market_regime.py       # SPY + VIX regime 判斷
-├── pipeline/              # 編排與輸出
-│   ├── db.py                  # SQLite 介面
-│   ├── etl.py                 # 每日 ETL
-│   ├── backfill_prices.py
-│   ├── backfill_sentiment.py
-│   ├── backfill_regime.py
-│   ├── signal_scanner.py      # 今日訊號掃描
-│   ├── report_builder.py      # HTML 報告產生
-│   ├── email_sender.py        # Gmail SMTP
-│   └── daily_report.py        # 主要入口
-├── tests/
-│   └── test_phase4c_comparison.py  # 三策略對照測試
-└── requirements.txt
+```text
+event_radar/
+  cli.py                      # Event Radar CLI 入口
+  config.py                   # YAML config loading
+  email_alert.py              # Event / Trend email rendering 與寄送
+  llm_classifier.py           # OpenRouter LLM 分類
+  models.py                   # Data models
+  performance.py              # Alert performance tracking 與 summary
+  price_update.py             # yfinance 價格更新
+  repository.py               # SQLite persistence
+  rss_scanner.py              # RSS ingestion
+  service.py                  # Event classification 與 alert draft 建立
+  technical_confirmation.py   # Breakout / MA / volume / RS 技術確認
+  theme_mapper.py             # Keyword theme matching
+  trends.py                   # Active / Cooling / Closed trend states
+
+config/
+  event_radar.yaml            # Radar 門檻與 RSS sources
+  theme_map.yaml              # 市場主題與相關股票
+  .env.example                # 本機環境變數範本
+
+pipeline/
+  db.py                       # 共用 SQLite price database helper
+  email_sender.py             # Gmail SMTP helper
+
+tests/
+  test_event_radar.py         # Event Radar 單元測試
 ```
 
----
+舊版 backtest 與 daily report 模組仍在：
 
-## 設計決策
+```text
+analyzer/
+engine/
+perception/
+pipeline/
+```
 
-以下列出幾個較不直觀的工程決策。
-
-1. **混搭情緒引擎（FinBERT + LLM）** — 選擇 FinBERT 做歷史回填是在發現 LLM 的非決定性之後才決定的（見 Finding 3）。每日報告仍使用 LLM，因為它能產生人類可讀的推理文字，讓使用者更容易理解訊號。
-
-2. **跨熊市測試** — 捨棄只用牛市資料的測試方式，因為 FINSABER 論文（Liu 等人，2025）指出 LLM 類策略在嚴謹測試下會退化。特別把歷史資料回填到 2022 年，以確保測試範圍涵蓋至少一段熊市。
-
-3. **多維度新聞搜尋被 rollback** — 早期版本的 news_fetcher 把新聞搜尋分成 5 個結構化維度（財報 / 分析師意見 / 風險事件 / 產業 / 最新），用 round-robin 方式分組後送給 LLM。我原本的直覺是「結構化輸入會比通用 query 產生更好的情緒訊號」，這個直覺是錯的。直接對照兩個版本的結果顯示，多維度版本在同樣的 watchlist 上平均報酬 **低了 3.46%**。事後分析後我認為原因是 round-robin 稀釋了極端訊號——一天有 1 篇財報大好消息 + 4 篇中性新聞，經過 round-robin 加權後訊號強度被平均掉了，反而不如單一 query 能抓到極端值。最後回到原本的單一 query 設計。
-
-4. **4c 作為實驗被保留但不採用為正式策略** — 雖然 4c 把平均最大回撤降低了 10.74 個百分點，但它在 14 檔股票中有 12 檔累積報酬輸給基準。正式環境使用 4a 基準 + 只做緊急平倉的 sentiment 用途。
-
-5. **SQLite 作為儲存層** — 選擇 SQLite 而非 PostgreSQL 的原因是這是單人系統、資料量不大（約 3 萬筆）、零維運成本、所有資料都在單一檔案中，方便備份和搬遷。
+這些模組目前保留作為研究與參考。長期方向是讓 `main` 聚焦 Event Radar，舊版 backtest/report code 則保留在 `legacy-backtest` branch。
 
 ---
 
-## 未來規劃
+## 測試
 
-**Walk-forward validation** 是目前最重要的待辦事項。現在的 4 年回測是把整段資料當成單一測試期間，但嚴謹的 walk-forward 驗證應該把資料切成訓練期（例如 2022-2024）做策略選擇與參數調整，然後在保留期（2025-2026）評估所選配置是否在樣本外仍然有效。
+執行 Event Radar 測試：
 
-這件事很重要，因為現在「4a 為正式策略」這個決定是我在看過完整 4 年資料的結果後才做的——這本身有輕微的 lookahead 問題。一個真正的 walk-forward 測試要麼會驗證這個決定是對的，要麼會顯示有另一個配置在更嚴謹的方法學下表現更好。FINSABER 論文（Liu 等人，2025）指出很多 LLM 類策略在這種嚴謹測試下會崩潰，所以對這個系統做同樣的測試是自然的下一步。
+```bash
+python -m unittest tests.test_event_radar
+```
+
+目前測試涵蓋：
+
+- keyword theme matching，
+- alert draft generation，
+- email deduplication，
+- event / alert persistence deduplication，
+- technical confirmation，
+- trend alert deduplication，
+- performance summary，
+- 更嚴格的 multi-signal Trend Cooling 規則。
 
 ---
 
-## 參考文獻
+## 舊版研究摘要
 
-- Liu, S., et al. (2025). *FINSABER: Financial Strategy Adaptation Benchmark Evaluating Robustness*. arXiv:2505.07078.
-- Araci, D. (2019). *FinBERT: Financial Sentiment Analysis with Pre-trained Language Models*. arXiv:1908.10063.
+在 Event Radar pivot 之前，這個專案主要在測試：LLM sentiment 是否能改善技術突破策略。
+
+核心發現：
+
+- 純技術突破基準在 4 年跨熊市測試中勝過 sentiment-filtered variants。
+- Regime sizing 可以降低回撤，但犧牲太多報酬。
+- LLM sentiment scoring 不夠 deterministic，不適合作為歷史回測核心訊號。
+- FinBERT 適合 deterministic historical sentiment backfill；LLM 更適合用來理解當前事件並產生可讀 reasoning。
+
+最後的設計決策：
+
+```text
+用 LLM 理解市場事件，不讓 LLM 直接決定交易。
+用技術確認檢查相關股票是否真的開始反應。
+```
 
 ---
 
-## 作者
+## 剩餘工作
 
-[@&lt;github-oscar940327&gt;](https://github.com/oscar940327)
+專案目前可用，但還沒有完全完成。
+
+近期：
+
+- 觀察 Event Alert 品質數個交易日。
+- 檢查 false positives 與 missed themes。
+- 調整 `theme_map.yaml` 與 alert priority thresholds。
+- 決定 Trend Alert email 長期維持手動，或之後改成 weekly digest / 自動寄送。
+- 確認 `legacy-backtest` 已推到 GitHub remote branch。
+
+中期：
+
+- 從累積的 alert outcomes 建立 performance review report。
+- 依 post-alert return 與 benchmark-relative return 排名 themes。
+- 分析哪些 technical conditions 最有用。
+- 加入 optional weekly summary email。
+- 如果 RSS 品質不足，增加更穩定的新聞來源。
+
+長期：
+
+- 清理 `main`，讓它更明確聚焦 Event Radar。
+- 將舊 daily report / backtest code 保留在 `legacy-backtest`。
+- 增加 Archived trend state。
+- 建立更完整的 event taxonomy 與 duplicate-event clustering。
+- 驗證 Event Radar alerts 是否長期能產生有用的研究線索。
 
 ---
 
-## 授權
+## 免責聲明
 
-MIT License — 詳見 [LICENSE](./LICENSE)。
+這是個人市場研究與 alert 工具，不會自動交易，也不是投資建議。
