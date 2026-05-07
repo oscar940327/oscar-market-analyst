@@ -1,0 +1,192 @@
+themes:
+  ai_memory_demand:
+    category: Semiconductor
+    label: AI Memory Demand
+    direction: bullish
+    tickers: [MU, SNDK, WDC, NVDA, AVGO]
+    keywords:
+      - ai server
+      - hbm
+      - dram
+      - nand
+      - memory pricing
+      - data center demand
+      - high bandwidth memory
+
+  ai_compute_capex:
+    category: Semiconductor
+    label: AI Compute Capex
+    direction: bullish
+    tickers: [NVDA, AMD, AVGO, TSM, MSFT, META, SMCI, DELL, HPE, SMH]
+    keywords:
+      - ai capex
+      - gpu demand
+      - accelerator
+      - data center spending
+      - cloud capex
+      - inference demand
+
+  ai_server_hardware:
+    category: AI Infrastructure
+    label: AI Server Hardware
+    direction: bullish
+    tickers: [SMCI, DELL, HPE, NVDA, AMD, AVGO, MU, WDC]
+    keywords:
+      - supermicro
+      - supermicro stock
+      - super micro
+      - ai server
+      - server hardware
+      - server margin
+      - server revenue
+      - strong margin
+      - revenue forecast
+      - rack scale
+      - liquid cooling
+      - ai infrastructure
+
+  semiconductor_earnings_momentum:
+    category: Semiconductor
+    label: Semiconductor Earnings Momentum
+    direction: bullish
+    tickers: [AMD, NVDA, AVGO, TSM, MU, SMH, QQQ]
+    keywords:
+      - chip stocks
+      - semiconductor earnings
+      - amd earnings
+      - revenue forecast
+      - margin forecast
+      - upbeat tech earnings
+      - strong margin
+      - chip demand
+
+  oil_supply_risk:
+    category: Energy
+    label: Oil Supply Risk
+    direction: mixed
+    tickers: [XOM, CVX, OXY, SLB, HAL, XLE, USO]
+    keywords:
+      - oil supply
+      - crude disruption
+      - opec
+      - middle east conflict
+      - tanker
+      - sanctions oil
+
+  middle_east_deescalation:
+    category: Macro
+    label: Middle East De-escalation
+    direction: mixed
+    tickers: [USO, XLE, XOM, CVX, OXY, DAL, UAL, AAL, GLD, SLV]
+    keywords:
+      - iran peace deal
+      - us-iran deal
+      - middle east peace
+      - ceasefire
+      - de-escalation
+      - oil falls
+      - deal hopes
+
+  precious_metals_safe_haven:
+    category: Commodities
+    label: Precious Metals Safe Haven
+    direction: bullish
+    tickers: [GLD, SLV, GOLD, NEM, AEM, PAAS]
+    keywords:
+      - gold jumps
+      - silver jumps
+      - gold prices
+      - silver prices
+      - safe haven
+      - precious metals
+      - geopolitical risk
+
+  rate_cut_growth:
+    category: Macro
+    label: Rate Cut Growth
+    direction: bullish
+    tickers: [QQQ, TLT, MSFT, NVDA, AMD, SOFI]
+    keywords:
+      - rate cut
+      - dovish fed
+      - yields fall
+      - inflation cools
+      - cpi below
+      - fed pivot
+
+  rate_hike_pressure:
+    category: Macro
+    label: Rate Hike Pressure
+    direction: bearish
+    tickers: [QQQ, TLT, SOFI, AAPL, MSFT]
+    keywords:
+      - rate hike
+      - hawkish fed
+      - yields rise
+      - inflation hot
+      - cpi above
+      - higher for longer
+
+  cybersecurity_incident:
+    category: Cybersecurity
+    label: Cybersecurity Incident
+    direction: mixed
+    tickers: [CRWD, PANW, ZS, FTNT]
+    keywords:
+      - cybersecurity breach
+      - ransomware
+      - outage
+      - data breach
+      - security incident
+      - vulnerability
+
+  space_launch_contract:
+    category: Space
+    label: Space Launch Contract
+    direction: bullish
+    tickers: [RKLB, LUNR, BA, LMT]
+    keywords:
+      - launch contract
+      - satellite launch
+      - nasa contract
+      - space force contract
+      - rocket launch
+
+  fintech_credit_risk:
+    category: Financials
+    label: Fintech Credit Risk
+    direction: bearish
+    tickers: [SOFI, AFRM, UPST, PYPL]
+    keywords:
+      - delinquency
+      - credit loss
+      - charge off
+      - consumer credit
+      - loan default
+
+  crypto_exchange_momentum:
+    category: Crypto
+    label: Crypto Exchange Momentum
+    direction: mixed
+    tickers: [COIN, MSTR, BTC-USD, ETH-USD, HOOD, IBIT]
+    keywords:
+      - coinbase
+      - crypto exchange
+      - bitcoin
+      - btc sales
+      - ethereum
+      - crypto earnings
+      - strategy bitcoin
+
+  consumer_discretionary_earnings:
+    category: Consumer
+    label: Consumer Discretionary Earnings
+    direction: mixed
+    tickers: [WMT, UBER, MAR, DIS, MCD, QQQ]
+    keywords:
+      - earnings top estimates
+      - earnings call summary
+      - revenue turns higher
+      - chart shows buy signs
+      - consumer recovery
+      - restaurant chain

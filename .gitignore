@@ -7,7 +7,7 @@ data/cache/
 *.db
 outputs/
 logs/
-tests/
 .vscode/
 !data/db/market.db
 !data/signal_log.csv
+Project_Plan.md

@@ -1,0 +1,40 @@
+radar:
+  max_events_per_run: 30
+  min_theme_score: 1
+  default_priority: Info
+
+llm:
+  model: "openrouter/deepseek/deepseek-chat-v3-0324"
+  temperature: 0.1
+  max_tokens: 700
+
+rss_feeds:
+  - name: Yahoo Finance
+    url: "https://finance.yahoo.com/news/rssindex"
+  - name: CNBC Markets
+    url: "https://www.cnbc.com/id/100003114/device/rss/rss.html"
+  - name: MarketWatch Top Stories
+    url: "https://feeds.content.dowjones.io/public/rss/mw_topstories"
+
+alert_priority:
+  high_priority_min_score: 3
+  watchlist_min_score: 2
+
+technical_confirmation:
+  breakout_lookback: 20
+  major_breakout_lookback: 55
+  volume_lookback: 20
+  volume_ratio_min: 1.3
+  relative_strength_days: 20
+  high_priority_confirmations: 3
+  watchlist_confirmations: 1
+  stop_loss_pct: 0.08
+  first_take_profit_pct: 0.10
+  second_take_profit_pct: 0.20
+  trailing_stop_pct: 0.08
+
+trend_management:
+  cooling_no_news_days: 5
+  closed_no_news_days: 20
+  cooling_drawdown_pct: 0.08
+  closed_drawdown_pct: 0.15
