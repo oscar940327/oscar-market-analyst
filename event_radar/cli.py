@@ -327,6 +327,8 @@ def main() -> None:
             closed_no_news_days=int(trend_config.get("closed_no_news_days", 20)),
             cooling_drawdown_pct=float(trend_config.get("cooling_drawdown_pct", 0.08)),
             closed_drawdown_pct=float(trend_config.get("closed_drawdown_pct", 0.15)),
+            cooling_min_signals=int(trend_config.get("cooling_min_signals", 2)),
+            closed_min_signals=int(trend_config.get("closed_min_signals", 2)),
         )
         repository = EventRepository()
         try:

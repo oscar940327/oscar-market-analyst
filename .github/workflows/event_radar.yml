@@ -67,7 +67,7 @@ jobs:
 
           if [ "$SEND_EMAIL" = "true" ]; then
             python -m event_radar.cli --run-daily --max-events "$MAX_EVENTS" --send-email-alerts
-            python -m event_radar.cli --update-trends --send-trend-alerts
+            python -m event_radar.cli --update-trends
           else
             python -m event_radar.cli --run-daily --max-events "$MAX_EVENTS"
             python -m event_radar.cli --update-trends

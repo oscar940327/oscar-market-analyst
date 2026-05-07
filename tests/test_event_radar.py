@@ -1,5 +1,6 @@
 import sqlite3
 import unittest
+from datetime import date
 
 import pandas as pd
 
@@ -15,6 +16,7 @@ from event_radar.repository import EventRepository
 from event_radar.service import build_alert_drafts
 from event_radar.technical_confirmation import TechnicalThresholds, confirm_alert
 from event_radar.theme_mapper import match_themes
+from event_radar.trends import TrendThresholds, update_trend_states
 from pipeline.db import _create_tables, upsert_prices
 
 
@@ -273,6 +275,105 @@ class EventRadarTests(unittest.TestCase):
         self.assertEqual(summaries[0].group, "AI Compute")
         self.assertEqual(summaries[0].sample_count, 1)
         self.assertAlmostEqual(summaries[0].avg_relative_return_pct, 0.08)
+
+    def test_trend_underperformance_alone_stays_active(self):
+        conn = sqlite3.connect(":memory:")
+        _create_tables(conn)
+        repository = EventRepository(conn)
+        self._save_trend_candidate(repository, ticker="NVDA")
+        dates = pd.date_range("2026-01-01", periods=61, freq="D")
+        upsert_prices(conn, self._trend_prices(dates, last_close=116), "NVDA")
+        upsert_prices(conn, self._trend_prices(dates, last_close=130), "SPY")
+        upsert_prices(conn, self._trend_prices(dates, last_close=128), "QQQ")
+
+        results = update_trend_states(
+            repository,
+            thresholds=TrendThresholds(cooling_min_signals=2),
+            dry_run=True,
+        )
+
+        self.assertEqual(results[0].status, "Active")
+        self.assertEqual(results[0].reason, "trend remains active")
+
+    def test_trend_requires_multiple_cooling_signals(self):
+        conn = sqlite3.connect(":memory:")
+        _create_tables(conn)
+        repository = EventRepository(conn)
+        self._save_trend_candidate(repository, ticker="NVDA")
+        dates = pd.date_range("2026-01-01", periods=61, freq="D")
+        upsert_prices(conn, self._trend_prices(dates, last_close=90), "NVDA")
+        upsert_prices(conn, self._trend_prices(dates, last_close=130), "SPY")
+        upsert_prices(conn, self._trend_prices(dates, last_close=128), "QQQ")
+
+        results = update_trend_states(
+            repository,
+            thresholds=TrendThresholds(cooling_min_signals=2),
+            dry_run=True,
+        )
+
+        self.assertEqual(results[0].status, "Cooling")
+        self.assertIn("below MA20", results[0].reason)
+        self.assertIn("underperforming SPY/QQQ over 20d", results[0].reason)
+
+    def _save_trend_candidate(self, repository, ticker):
+        event_id = repository.save_event(
+            ClassifiedEvent(
+                news=NewsEvent(
+                    title="AI infrastructure demand",
+                    url=f"https://example.test/{ticker}",
+                    published_at=date.today().isoformat(),
+                ),
+                matches=[
+                    ThemeMatch(
+                        theme="AI Compute",
+                        category="Semiconductor",
+                        tickers=[ticker],
+                        matched_keywords=["AI"],
+                        score=1,
+                    )
+                ],
+            )
+        )
+        repository.save_alerts(
+            build_alert_drafts(
+                event_id,
+                ClassifiedEvent(
+                    news=NewsEvent(title="AI infrastructure demand"),
+                    matches=[
+                        ThemeMatch(
+                            theme="AI Compute",
+                            category="Semiconductor",
+                            tickers=[ticker],
+                            matched_keywords=["AI"],
+                            score=1,
+                        )
+                    ],
+                ),
+            )
+        )
+        repository.conn.execute(
+            "UPDATE radar_alerts SET technical_status='partial' WHERE ticker=?",
+            (ticker,),
+        )
+        repository.conn.commit()
+
+    def _trend_prices(self, dates, last_close):
+        rows = []
+        for idx, _date in enumerate(dates):
+            close = 100 + idx * 0.3
+            rows.append(
+                {
+                    "open": close,
+                    "high": close + 1,
+                    "low": close - 1,
+                    "close": close,
+                    "volume": 1000,
+                }
+            )
+        rows[-1]["close"] = last_close
+        rows[-1]["high"] = max(rows[-1]["high"], last_close)
+        rows[-1]["low"] = min(rows[-1]["low"], last_close)
+        return pd.DataFrame(rows, index=dates)
 
 
 if __name__ == "__main__":

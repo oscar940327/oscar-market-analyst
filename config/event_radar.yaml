@@ -38,3 +38,5 @@ trend_management:
   closed_no_news_days: 20
   cooling_drawdown_pct: 0.08
   closed_drawdown_pct: 0.15
+  cooling_min_signals: 2
+  closed_min_signals: 2

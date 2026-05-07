@@ -25,6 +25,8 @@ class TrendThresholds:
     closed_no_news_days: int = 20
     cooling_drawdown_pct: float = 0.08
     closed_drawdown_pct: float = 0.15
+    cooling_min_signals: int = 2
+    closed_min_signals: int = 2
 
 
 def _pct_change(df: pd.DataFrame, days: int) -> float | None:
@@ -76,16 +78,15 @@ def update_trend_states(
         prices = load_prices(repository.conn, str(ticker))
         last_close = None
         high_watermark = None
-        reasons = []
+        cooling_reasons = []
+        closed_reasons = []
         status = "Active"
 
         days_since_news = (today - date.fromisoformat(str(last_event_date))).days
         if days_since_news >= thresholds.closed_no_news_days:
-            status = "Closed"
-            reasons.append(f"no related alert for {days_since_news} days")
+            closed_reasons.append(f"no related alert for {days_since_news} days")
         elif days_since_news >= thresholds.cooling_no_news_days:
-            status = "Cooling"
-            reasons.append(f"no related alert for {days_since_news} days")
+            cooling_reasons.append(f"no related alert for {days_since_news} days")
 
         if not prices.empty:
             prices = prices.sort_index()
@@ -95,21 +96,29 @@ def update_trend_states(
                 high_watermark = float(after_alert["close"].max())
                 drawdown = (last_close - high_watermark) / high_watermark
                 if drawdown <= -thresholds.closed_drawdown_pct:
-                    status = "Closed"
-                    reasons.append(f"drawdown from high {drawdown:.2%}")
-                elif drawdown <= -thresholds.cooling_drawdown_pct and status == "Active":
-                    status = "Cooling"
-                    reasons.append(f"drawdown from high {drawdown:.2%}")
+                    closed_reasons.append(f"drawdown from high {drawdown:.2%}")
+                elif drawdown <= -thresholds.cooling_drawdown_pct:
+                    cooling_reasons.append(f"drawdown from high {drawdown:.2%}")
 
             if len(prices) >= 21:
                 ma20 = float(prices["close"].tail(20).mean())
-                if last_close < ma20 and status == "Active":
-                    status = "Cooling"
-                    reasons.append("below MA20")
+                if last_close < ma20:
+                    cooling_reasons.append("below MA20")
 
-            if _underperforming_benchmark(repository, prices) and status == "Active":
-                status = "Cooling"
-                reasons.append("underperforming SPY/QQQ over 20d")
+            if _underperforming_benchmark(repository, prices):
+                cooling_reasons.append("underperforming SPY/QQQ over 20d")
+
+        closed_signal_count = len(set(closed_reasons + cooling_reasons))
+        cooling_signal_count = len(set(cooling_reasons))
+        if closed_signal_count >= thresholds.closed_min_signals and closed_reasons:
+            status = "Closed"
+            reasons = list(dict.fromkeys(closed_reasons + cooling_reasons))
+        elif cooling_signal_count >= thresholds.cooling_min_signals:
+            status = "Cooling"
+            reasons = list(dict.fromkeys(cooling_reasons))
+        else:
+            status = "Active"
+            reasons = []
 
         reason = "; ".join(reasons) if reasons else "trend remains active"
         result = TrendStateResult(
