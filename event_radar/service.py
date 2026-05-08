@@ -46,15 +46,22 @@ def build_alert_drafts(
     classified: ClassifiedEvent,
     high_priority_min_score: int = 3,
     watchlist_min_score: int = 2,
+    high_priority_min_event_strength: int = 70,
 ) -> list[AlertDraft]:
     alerts: list[AlertDraft] = []
 
     for match in classified.matches:
-        priority = priority_for_match(match, high_priority_min_score, watchlist_min_score)
+        priority = priority_for_match(
+            match,
+            high_priority_min_score,
+            watchlist_min_score,
+            high_priority_min_event_strength=high_priority_min_event_strength,
+        )
         keyword_text = ", ".join(match.matched_keywords[:4])
         reason = (
             f"{match.theme}: matched {keyword_text}; "
-            f"direction={match.direction}; confidence={match.confidence:.2f}"
+            f"direction={match.direction}; confidence={match.confidence:.2f}; "
+            f"news_event_strength={match.event_strength}"
         )
 
         for ticker in match.tickers:
@@ -70,6 +77,7 @@ def build_alert_drafts(
                         "direction": match.direction,
                         "matched_keywords": match.matched_keywords,
                         "theme_score": match.score,
+                        "news_event_strength": match.event_strength,
                     },
                 )
             )
@@ -82,6 +90,7 @@ def persist_classified_events(
     repository: EventRepository,
     high_priority_min_score: int = 3,
     watchlist_min_score: int = 2,
+    high_priority_min_event_strength: int = 70,
 ) -> tuple[int, int]:
     event_count = 0
     alert_count = 0
@@ -94,6 +103,7 @@ def persist_classified_events(
             classified,
             high_priority_min_score=high_priority_min_score,
             watchlist_min_score=watchlist_min_score,
+            high_priority_min_event_strength=high_priority_min_event_strength,
         )
         alert_count += repository.save_alerts(alerts)
 

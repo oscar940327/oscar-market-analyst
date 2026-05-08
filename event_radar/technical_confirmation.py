@@ -15,6 +15,7 @@ class TechnicalThresholds:
     major_breakout_lookback: int = 55
     volume_lookback: int = 20
     volume_ratio_min: float = 1.3
+    high_priority_volume_ratio_min: float = 1.5
     relative_strength_days: int = 20
     high_priority_confirmations: int = 3
     watchlist_confirmations: int = 1
@@ -101,7 +102,15 @@ def confirm_alert(
     ]
     confirmation_count = sum(1 for item in confirmations if item)
 
-    if confirmation_count >= thresholds.high_priority_confirmations:
+    high_priority_volume_confirmed = (
+        volume_ratio is not None
+        and volume_ratio >= thresholds.high_priority_volume_ratio_min
+    )
+
+    if (
+        confirmation_count >= thresholds.high_priority_confirmations
+        and high_priority_volume_confirmed
+    ):
         priority = "High Priority"
         technical_status = "confirmed"
     elif confirmation_count >= thresholds.watchlist_confirmations:
@@ -151,6 +160,7 @@ def confirm_alert(
             "breakout_55": breakout_55,
             "above_ma20": above_ma20,
             "volume_confirmed": volume_confirmed,
+            "high_priority_volume_confirmed": high_priority_volume_confirmed,
             "rs_confirmed": rs_confirmed,
             "confirmation_count": confirmation_count,
             "risk_levels": {

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from event_radar.event_strength import score_news_event_strength
 from event_radar.models import NewsEvent, ThemeMatch
 
 
@@ -16,6 +17,7 @@ def match_themes(
     min_score: int = 1,
 ) -> list[ThemeMatch]:
     text = _normalize(event.text)
+    event_strength = score_news_event_strength(event)
     matches: list[ThemeMatch] = []
 
     for theme_key, theme in (theme_map.get("themes") or {}).items():
@@ -41,8 +43,8 @@ def match_themes(
                 score=score,
                 direction=str(theme.get("direction") or "mixed"),
                 confidence=round(confidence, 2),
+                event_strength=event_strength,
             )
         )
 
     return sorted(matches, key=lambda item: item.score, reverse=True)
-

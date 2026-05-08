@@ -5,6 +5,7 @@ from datetime import date
 import pandas as pd
 
 from event_radar.email_alert import dedupe_alerts_for_email
+from event_radar.event_strength import score_news_event_strength
 from event_radar.models import (
     ClassifiedEvent,
     NewsEvent,
@@ -217,6 +218,63 @@ class EventRadarTests(unittest.TestCase):
         self.assertEqual(check.technical_status, "confirmed")
         self.assertTrue(check.breakout)
         self.assertGreater(check.volume_ratio, 1.3)
+
+    def test_high_priority_requires_volume_confirmation(self):
+        conn = sqlite3.connect(":memory:")
+        _create_tables(conn)
+        repository = EventRepository(conn)
+        dates = pd.date_range("2026-01-01", periods=61, freq="D")
+
+        def prices(base, last_close, last_volume):
+            rows = []
+            for idx, _date in enumerate(dates):
+                close = base + idx * 0.1
+                rows.append(
+                    {
+                        "open": close,
+                        "high": close + 0.5,
+                        "low": close - 0.5,
+                        "close": close,
+                        "volume": 1000,
+                    }
+                )
+            rows[-1]["close"] = last_close
+            rows[-1]["high"] = last_close
+            rows[-1]["volume"] = last_volume
+            return pd.DataFrame(rows, index=dates)
+
+        upsert_prices(conn, prices(100, 120, 300), "MU")
+        upsert_prices(conn, prices(100, 106, 1000), "SPY")
+        upsert_prices(conn, prices(100, 105, 1000), "QQQ")
+
+        check = confirm_alert(
+            alert=type(
+                "Pending",
+                (),
+                {
+                    "alert_id": 1,
+                    "ticker": "MU",
+                    "theme": "AI Memory Demand",
+                    "priority": "Info",
+                    "reason": "event reason",
+                },
+            )(),
+            repository=repository,
+            thresholds=TechnicalThresholds(high_priority_confirmations=3),
+        )
+
+        self.assertEqual(check.priority, "Watchlist")
+        self.assertEqual(check.technical_status, "partial")
+        self.assertLess(check.volume_ratio, 1.0)
+
+    def test_opinion_article_has_low_event_strength(self):
+        weak = NewsEvent(
+            title="Is Nvidia (NVDA) The Best AI Stock Pick of Cathie Wood in 2026?"
+        )
+        strong = NewsEvent(title="NVDA raises guidance as AI demand accelerates")
+
+        self.assertEqual(score_news_event_strength(weak), 25)
+        self.assertGreaterEqual(score_news_event_strength(strong), 85)
 
     def test_performance_summary_groups_by_theme(self):
         conn = sqlite3.connect(":memory:")

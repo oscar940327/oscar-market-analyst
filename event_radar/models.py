@@ -31,6 +31,7 @@ class ThemeMatch:
     score: int
     direction: str = "mixed"
     confidence: float = 0.0
+    event_strength: int = 100
 
 
 @dataclass(frozen=True)

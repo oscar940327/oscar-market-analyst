@@ -8,6 +8,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from event_radar.event_strength import score_news_event_strength
 from event_radar.models import NewsEvent, ThemeMatch
 
 
@@ -116,6 +117,7 @@ def classify_event_with_llm(
         return []
 
     themes = theme_map.get("themes") or {}
+    event_strength = score_news_event_strength(event)
     matches: list[ThemeMatch] = []
     for item in data.get("themes") or []:
         theme_key = str(item.get("theme_key") or "")
@@ -143,6 +145,7 @@ def classify_event_with_llm(
                 score=max(1, round(confidence * 4)),
                 direction=direction,
                 confidence=round(confidence, 2),
+                event_strength=event_strength,
             )
         )
 

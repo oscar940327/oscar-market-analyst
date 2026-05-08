@@ -44,6 +44,9 @@ def _technical_thresholds(event_config: dict) -> TechnicalThresholds:
         major_breakout_lookback=int(technical_config.get("major_breakout_lookback", 55)),
         volume_lookback=int(technical_config.get("volume_lookback", 20)),
         volume_ratio_min=float(technical_config.get("volume_ratio_min", 1.3)),
+        high_priority_volume_ratio_min=float(
+            technical_config.get("high_priority_volume_ratio_min", 1.5)
+        ),
         relative_strength_days=int(technical_config.get("relative_strength_days", 20)),
         high_priority_confirmations=int(
             technical_config.get("high_priority_confirmations", 3)
@@ -280,6 +283,9 @@ def main() -> None:
                 repository,
                 high_priority_min_score=int(priority_config.get("high_priority_min_score", 3)),
                 watchlist_min_score=int(priority_config.get("watchlist_min_score", 2)),
+                high_priority_min_event_strength=int(
+                    priority_config.get("high_priority_min_event_strength", 70)
+                ),
             )
             print(f"Saved events: {event_count}")
             print(f"Saved alert drafts: {alert_count}")
@@ -537,6 +543,9 @@ def main() -> None:
             major_breakout_lookback=int(technical_config.get("major_breakout_lookback", 55)),
             volume_lookback=int(technical_config.get("volume_lookback", 20)),
             volume_ratio_min=float(technical_config.get("volume_ratio_min", 1.3)),
+            high_priority_volume_ratio_min=float(
+                technical_config.get("high_priority_volume_ratio_min", 1.5)
+            ),
             relative_strength_days=int(technical_config.get("relative_strength_days", 20)),
             high_priority_confirmations=int(
                 technical_config.get("high_priority_confirmations", 3)
@@ -622,6 +631,9 @@ def main() -> None:
             repository,
             high_priority_min_score=int(priority_config.get("high_priority_min_score", 3)),
             watchlist_min_score=int(priority_config.get("watchlist_min_score", 2)),
+            high_priority_min_event_strength=int(
+                priority_config.get("high_priority_min_event_strength", 70)
+            ),
         )
     finally:
         repository.close()

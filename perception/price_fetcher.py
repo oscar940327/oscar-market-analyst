@@ -33,7 +33,7 @@ def fetch_ohlcv(
                 auto_adjust=False,
             )
             if df.empty:
-                print(f"  ⚠️ {ticker}: no data (attempt {attempt}/{max_retries})")
+                print(f"  WARN {ticker}: no data (attempt {attempt}/{max_retries})")
                 if attempt == max_retries:
                     return pd.DataFrame()
                 time.sleep(2 ** attempt)
@@ -58,11 +58,11 @@ def fetch_ohlcv(
             available = [c for c in keep if c in df.columns]
             df = df[available].dropna(subset=["close"])
 
-            print(f"  ✅ {ticker}: {len(df)} rows ({df.index[0].date()} ~ {df.index[-1].date()})")
+            print(f"  OK {ticker}: {len(df)} rows ({df.index[0].date()} ~ {df.index[-1].date()})")
             return df
 
         except Exception as e:
-            print(f"  ⚠️ {ticker}: error (attempt {attempt}/{max_retries}): {e}")
+            print(f"  WARN {ticker}: error (attempt {attempt}/{max_retries}): {e}")
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
 

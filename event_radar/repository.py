@@ -539,8 +539,13 @@ class EventRepository:
         return count
 
 
-def priority_for_match(match: ThemeMatch, high_min: int, watchlist_min: int) -> str:
-    if match.score >= high_min:
+def priority_for_match(
+    match: ThemeMatch,
+    high_min: int,
+    watchlist_min: int,
+    high_priority_min_event_strength: int = 70,
+) -> str:
+    if match.score >= high_min and match.event_strength >= high_priority_min_event_strength:
         return "High Priority"
     if match.score >= watchlist_min:
         return "Watchlist"
