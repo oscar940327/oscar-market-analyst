@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Trading Report - 2026-05-08</title>
+    
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px;
+    color: #24292e;
+    background: #f6f8fa;
+}
+.container {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+h1 {
+    color: #0366d6;
+    border-bottom: 2px solid #e1e4e8;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+h2 {
+    color: #24292e;
+    margin-top: 30px;
+    font-size: 18px;
+    border-left: 4px solid #0366d6;
+    padding-left: 10px;
+}
+.regime-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+}
+.regime-bull { background: #d4edda; color: #155724; }
+.regime-neutral { background: #fff3cd; color: #856404; }
+.regime-bear { background: #f8d7da; color: #721c24; }
+
+.signal-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 14px 0;
+    background: #fafbfc;
+}
+.signal-buy { border-left: 4px solid #28a745; }
+.signal-emergency { border-left: 4px solid #dc3545; background: #fff5f5; }
+
+.score-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    padding: 14px;
+    margin: 10px 0;
+    background: #fafbfc;
+}
+.score-strong-buy { border-left: 5px solid #28a745; background: #f0fff4; }
+.score-buy { border-left: 5px solid #5cb85c; }
+.score-hold { border-left: 5px solid #f0ad4e; }
+.score-wait { border-left: 5px solid #999; opacity: 0.85; }
+.score-sell { border-left: 5px solid #dc3545; opacity: 0.75; }
+
+.ticker {
+    font-size: 18px;
+    font-weight: 700;
+    color: #24292e;
+}
+.action-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+.tag-buy { background: #28a745; color: white; }
+.tag-emergency { background: #dc3545; color: white; }
+
+.score-big {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0366d6;
+    margin-left: 10px;
+}
+.score-big.high { color: #28a745; }
+.score-big.mid { color: #f0ad4e; }
+.score-big.low { color: #dc3545; }
+
+.score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+    margin: 10px 0;
+    font-size: 13px;
+}
+.score-row {
+    display: flex;
+    justify-content: space-between;
+}
+.score-row .label { color: #586069; }
+.score-row .value { font-weight: 500; font-family: 'SF Mono', Menlo, monospace; }
+
+.levels-box {
+    background: #f6f8fa;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-family: 'SF Mono', Menlo, monospace;
+}
+.levels-box .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+.levels-box .label { color: #586069; }
+
+table.signal-info {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+table.signal-info td {
+    padding: 6px 0;
+    font-size: 14px;
+}
+table.signal-info td.label {
+    color: #586069;
+    width: 40%;
+}
+table.signal-info td.value {
+    font-weight: 500;
+    font-family: 'SF Mono', Menlo, monospace;
+}
+
+.reasons {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #2d6e3e;
+}
+.risks {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #b94a48;
+}
+.reasoning {
+    font-style: italic;
+    color: #586069;
+    font-size: 13px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f6f8fa;
+    border-radius: 4px;
+}
+.footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e4e8;
+    font-size: 12px;
+    color: #6a737d;
+    text-align: center;
+}
+.empty {
+    text-align: center;
+    padding: 20px;
+    color: #6a737d;
+    font-style: italic;
+}
+</style>
+
+</head>
+<body>
+    <div class="container"><h1>📊 每日交易分析報告</h1><p><b>日期：</b>2026-05-08</p><p><b>市場環境：</b><span class="regime-badge regime-bull">🐂 Bull (多頭)</span></p><p style="color: #586069; font-size: 13px;">SPY $731.58 / MA50 $683.31 (+7.06%) | VIX: 17.08</p><h2>🟢 突破進場訊號 (7)</h2>
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">TSLA</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$427.40 > 20日高 $415.83 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$427.40</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$393.21 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$363.29 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">MU</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$711.13 > 20日高 $683.09 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$711.13</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$654.24 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$604.46 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">SNDK</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$1454.64 > 20日高 $1439.70 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$1454.64</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$1338.27 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$1236.45 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">NVDA</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$217.58 > 20日高 $216.83 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$217.58</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$200.17 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$184.94 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">RKLB</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$95.19 > 20日高 $93.10 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$95.19</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$87.57 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$80.91 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">AAPL</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$293.27 > 20日高 $292.13 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$293.27</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$269.80 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$249.28 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    
+    <div class="signal-card signal-buy">
+        <div>
+            <span class="ticker">AMD</span>
+            <span class="action-tag tag-buy">🟢 BREAKOUT</span>
+        </div>
+        <table class="signal-info">
+            <tr><td class="label">📊 突破狀態</td>
+                <td class="value">$432.78 > 20日高 $430.60 ✓</td></tr>
+            <tr><td class="label">💰 觸發價</td>
+                <td class="value">$432.78</td></tr>
+            <tr><td class="label">🛑 絕對停損</td>
+                <td class="value">$398.16 (-8%)</td></tr>
+            <tr><td class="label">📉 移動停損</td>
+                <td class="value">$367.86 (-15%)</td></tr>
+            <tr><td class="label">🌍 大盤狀態</td>
+                <td class="value">neutral</td></tr>
+        </table>
+    </div>
+    <h2>📊 綜合評分排行榜 (15 檔)</h2><p style="color: #586069; font-size: 13px;">6 維度技術評分（趨勢/乖離率/量能/支撐/MACD/RSI），按分數排序。包含理想買入價、停損價、目標價的計算結果。</p>
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">CRWD</span>
+            <span class="score-big mid">72</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$501.31</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+3.5% (14/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量回調 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">72 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$484.17</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$468.42</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$461.21</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$506.79</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.14</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多 · ⚡ 略高於MA5(+3.5%)，可小倉介入 · ✅ 縮量回調，主力洗盤 · ✅ MA5支撐有效</div>
+        <div class="risks">⚠️ RSI 超買 (72)</div>
+    </div>
+    
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">AAPL</span>
+            <span class="score-big mid">71</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$293.27</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+2.6% (14/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">69 (強勢買入) (8/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$285.85</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$278.92</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$270.48</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$294.55</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.06</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多 · ⚡ 略高於MA5(+2.6%)，可小倉介入 · ✅ MA5支撐有效 · ✅ RSI 強勢區 (69)</div>
+        
+    </div>
+    
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">AVGO</span>
+            <span class="score-big mid">70</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$421.59</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">多頭排列 (26/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+0.2% (18/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">10/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">空頭 (2/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">60 (強勢買入) (8/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$420.69</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$416.56</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$405.65</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$437.68</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>1.01</span></div>
+        </div>
+        
+        <div class="reasons">✅ 多頭排列 · ✅ 貼近MA5(+0.2%)，介入好時機 · ✅ MA5支撐有效 · ✅ MA10支撐有效 · ✅ RSI 強勢區 (60)</div>
+        
+    </div>
+    
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">GOOGL</span>
+            <span class="score-big mid">67</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$399.49</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+1.5% (18/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">89 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$393.44</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$378.77</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$367.53</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$400.72</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.04</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多 · ✅ 貼近MA5(+1.5%)，介入好時機 · ✅ MA5支撐有效</div>
+        <div class="risks">⚠️ RSI 超買 (89)</div>
+    </div>
+    
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">TSM</span>
+            <span class="score-big mid">63</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$415.27</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">多頭排列 (26/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+1.5% (18/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">72 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$408.99</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$402.98</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$385.86</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$420.00</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.16</span></div>
+        </div>
+        
+        <div class="reasons">✅ 多頭排列 · ✅ 貼近MA5(+1.5%)，介入好時機 · ✅ MA5支撐有效</div>
+        <div class="risks">⚠️ RSI 超買 (72)</div>
+    </div>
+    
+    <div class="score-card score-buy">
+        <div>
+            <span class="ticker">RKLB</span>
+            <span class="score-big mid">63</span>
+            <span style="color: #586069;">/100 · 買入</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$95.19</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">多頭排列 (26/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+14.0% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">量能正常 (10/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">零軸上金叉 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">54 (強勢買入) (8/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$83.50</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$81.67</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$87.57</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$95.43</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.03</span></div>
+        </div>
+        
+        <div class="reasons">✅ 多頭排列 · ✅ MACD 零軸上金叉，最強買點 · ✅ RSI 強勢區 (54)</div>
+        <div class="risks">❌ 乖離率過高(+14.0%)，嚴禁追高</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">SNDK</span>
+            <span class="score-big mid">53</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$1454.64</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+5.9% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">79 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$1373.35</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$1228.70</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$1338.27</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$1462.28</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.07</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多 · ✅ MA5支撐有效</div>
+        <div class="risks">❌ 乖離率過高(+5.9%)，嚴禁追高 · ⚠️ RSI 超買 (79)</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">MSFT</span>
+            <span class="score-big mid">53</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$416.14</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">弱勢空頭 (8/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+0.2% (18/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量回調 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">空頭 (2/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">49 (中性) (5/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$415.17</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$417.66</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$382.85</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$433.70</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.53</span></div>
+        </div>
+        
+        <div class="reasons">✅ 貼近MA5(+0.2%)，介入好時機 · ✅ 縮量回調，主力洗盤 · ✅ MA5支撐有效</div>
+        
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">TSLA</span>
+            <span class="score-big mid">52</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$427.40</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">多頭排列 (26/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+5.8% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">69 (強勢買入) (8/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$403.96</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$391.97</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$393.21</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$436.23</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.26</span></div>
+        </div>
+        
+        <div class="reasons">✅ 多頭排列 · ✅ RSI 強勢區 (69)</div>
+        <div class="risks">❌ 乖離率過高(+5.8%)，嚴禁追高</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">META</span>
+            <span class="score-big mid">50</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$613.31</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢空頭 (0/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+0.3% (18/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量回調 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">5/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">空頭 (2/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">29 (超賣) (10/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$611.67</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$629.81</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$564.25</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$691.52</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>1.59</span></div>
+        </div>
+        
+        <div class="reasons">✅ 貼近MA5(+0.3%)，介入好時機 · ✅ 縮量回調，主力洗盤 · ✅ MA5支撐有效 · ✅ RSI 超賣 (29)，反彈機會</div>
+        <div class="risks">⚠️ 強勢空頭排列，不宜做多</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">MU</span>
+            <span class="score-big mid">48</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$711.13</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+9.7% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">87 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$648.20</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$584.77</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$654.24</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$711.63</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.01</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多</div>
+        <div class="risks">❌ 乖離率過高(+9.7%)，嚴禁追高 · ⚠️ RSI 超買 (87)</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">AMD</span>
+            <span class="score-big mid">48</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$432.78</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢多頭 (30/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+10.4% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">多頭 (8/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">79 (超買) (0/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$391.89</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$366.94</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$398.16</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$434.80</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.06</span></div>
+        </div>
+        
+        <div class="reasons">✅ 強勢多頭排列，順勢做多</div>
+        <div class="risks">❌ 乖離率過高(+10.4%)，嚴禁追高 · ⚠️ RSI 超買 (79)</div>
+    </div>
+    
+    <div class="score-card score-hold">
+        <div>
+            <span class="ticker">SOFI</span>
+            <span class="score-big mid">47</span>
+            <span style="color: #586069;">/100 · 持有</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$15.72</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">強勢空頭 (0/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">-2.1% (20/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量回調 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">空頭 (2/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">25 (超賣) (10/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$16.05</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$16.54</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$14.46</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$20.79</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>4.04</span></div>
+        </div>
+        
+        <div class="reasons">✅ 略低於MA5(-2.1%)，回踩買點 · ✅ 縮量回調，主力洗盤 · ✅ RSI 超賣 (25)，反彈機會</div>
+        <div class="risks">⚠️ 強勢空頭排列，不宜做多</div>
+    </div>
+    
+    <div class="score-card score-wait">
+        <div>
+            <span class="ticker">PLTR</span>
+            <span class="score-big low">44</span>
+            <span style="color: #586069;">/100 · 觀望</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$134.35</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">空頭排列 (4/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">-2.2% (20/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量回調 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">空頭 (2/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">39 (弱勢) (3/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$137.43</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$139.26</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$123.60</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$162.40</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>2.61</span></div>
+        </div>
+        
+        <div class="reasons">✅ 略低於MA5(-2.2%)，回踩買點 · ✅ 縮量回調，主力洗盤</div>
+        <div class="risks">⚠️ 空頭排列</div>
+    </div>
+    
+    <div class="score-card score-wait">
+        <div>
+            <span class="ticker">NVDA</span>
+            <span class="score-big low">41</span>
+            <span style="color: #586069;">/100 · 觀望</span>
+            <span style="float: right; color: #586069; font-size: 13px;">$217.58</span>
+        </div>
+        
+    <div class="score-grid">
+        <div class="score-row">
+            <span class="label">📈 趨勢</span>
+            <span class="value">弱勢空頭 (8/30)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📐 乖離率</span>
+            <span class="value">+5.4% (4/20)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">📊 量能</span>
+            <span class="value">縮量上漲 (6/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🎯 支撐</span>
+            <span class="value">0/10</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🔵 MACD</span>
+            <span class="value">零軸上金叉 (15/15)</span>
+        </div>
+        <div class="score-row">
+            <span class="label">🌡️ RSI</span>
+            <span class="value">62 (強勢買入) (8/10)</span>
+        </div>
+    </div>
+    
+        
+        <div class="levels-box">
+            <div class="row"><span class="label">💰 理想買入 (MA5)</span><span>$206.38</span></div>
+            <div class="row"><span class="label">💰 次優買入 (MA10)</span><span>$206.89</span></div>
+            <div class="row"><span class="label">🛑 停損</span><span>$201.27</span></div>
+            <div class="row"><span class="label">🎯 目標 (60日高)</span><span>$217.80</span></div>
+            <div class="row"><span class="label">⚖️ 風險報酬比</span><span>0.01</span></div>
+        </div>
+        
+        <div class="reasons">✅ MACD 零軸上金叉，最強買點 · ✅ RSI 強勢區 (62)</div>
+        <div class="risks">❌ 乖離率過高(+5.4%)，嚴禁追高</div>
+    </div>
+    
+    <div class="footer">
+        Oscar Market Analyst · Phase 5.5<br>
+        本報告由系統自動產生，僅作為決策參考，不構成投資建議
+    </div>
+    </div>
+    
+</body>
+</html>
