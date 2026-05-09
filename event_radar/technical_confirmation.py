@@ -25,6 +25,47 @@ class TechnicalThresholds:
     trailing_stop_pct: float = 0.08
 
 
+def _apply_fundamental_overlay(
+    check: TechnicalCheck,
+    repository: EventRepository,
+) -> TechnicalCheck:
+    fundamental = repository.load_latest_fundamental(check.ticker)
+    if fundamental is None or fundamental.rating == "Unknown":
+        return check
+
+    priority = check.priority
+    technical_status = check.technical_status
+    reason = f"{check.reason}; fundamental={fundamental.rating} ({fundamental.summary})"
+    metadata = dict(check.metadata)
+    metadata["fundamental"] = {
+        "check_date": fundamental.check_date,
+        "rating": fundamental.rating,
+        "valuation_score": fundamental.valuation_score,
+        "quality_score": fundamental.quality_score,
+        "summary": fundamental.summary,
+    }
+
+    if fundamental.rating == "E":
+        priority = "Info"
+        technical_status = "unconfirmed"
+        reason += "; priority capped by weak fundamentals"
+    elif fundamental.rating == "D" and priority == "High Priority":
+        priority = "Watchlist"
+        reason += "; high priority capped by weak fundamentals"
+
+    return TechnicalCheck(
+        ticker=check.ticker,
+        technical_status=technical_status,
+        priority=priority,
+        close_price=check.close_price,
+        relative_strength=check.relative_strength,
+        breakout=check.breakout,
+        volume_ratio=check.volume_ratio,
+        reason=reason,
+        metadata=metadata,
+    )
+
+
 def _pct_change(df: pd.DataFrame, days: int) -> float | None:
     if df.empty or len(df) <= days:
         return None
@@ -142,7 +183,8 @@ def confirm_alert(
         f"trailing_stop={trailing_stop:.2f}",
     ]
 
-    return TechnicalCheck(
+    return _apply_fundamental_overlay(
+        TechnicalCheck(
         ticker=alert.ticker,
         technical_status=technical_status,
         priority=priority,
@@ -171,6 +213,8 @@ def confirm_alert(
                 "trailing_stop": trailing_stop,
             },
         },
+        ),
+        repository,
     )
 
 

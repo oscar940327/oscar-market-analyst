@@ -109,6 +109,12 @@ h1 {
     font-size: 13px;
     line-height: 1.45;
 }
+.fundamental {
+    margin-top: 8px;
+    color: #57606a;
+    font-size: 12px;
+    line-height: 1.4;
+}
 a { color: #0969da; }
 .footer {
     color: #57606a;
@@ -196,6 +202,19 @@ def _source_line(alert: RadarAlert) -> str:
     return text
 
 
+def _fundamental_line(alert: RadarAlert) -> str:
+    fundamental = alert.metadata.get("fundamental") if alert.metadata else None
+    if not isinstance(fundamental, dict):
+        return ""
+    rating = escape(str(fundamental.get("rating") or "Unknown"))
+    summary = escape(str(fundamental.get("summary") or ""))
+    check_date = escape(str(fundamental.get("check_date") or ""))
+    label = f"Fundamental {rating}"
+    if check_date:
+        label += f" ({check_date})"
+    return f'<div class="fundamental"><strong>{label}</strong>: {summary}</div>'
+
+
 def build_alert_email(alerts: list[RadarAlert], report_date: str | None = None) -> str:
     report_date = report_date or date.today().isoformat()
     by_event: dict[int, list[RadarAlert]] = defaultdict(list)
@@ -240,6 +259,7 @@ def build_alert_email(alerts: list[RadarAlert], report_date: str | None = None) 
                         </div>
                     </div>
                     <div class="reason">{escape(alert.reason)}</div>
+                    {_fundamental_line(alert)}
                 </div>
                 """
             )

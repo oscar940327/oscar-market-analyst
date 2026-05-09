@@ -38,6 +38,7 @@ technical_confirmation:
 trend_management:
   cooling_no_news_days: 5
   closed_no_news_days: 20
+  archived_no_news_days: 60
   cooling_drawdown_pct: 0.08
   closed_drawdown_pct: 0.15
   cooling_min_signals: 2

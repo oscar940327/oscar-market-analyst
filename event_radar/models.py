@@ -104,6 +104,16 @@ class RadarAlert:
 
 
 @dataclass(frozen=True)
+class FundamentalSnapshot:
+    ticker: str
+    check_date: str
+    rating: str
+    valuation_score: int
+    quality_score: int
+    summary: str
+
+
+@dataclass(frozen=True)
 class TrendAlert:
     theme: str
     ticker: str

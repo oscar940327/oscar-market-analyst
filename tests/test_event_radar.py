@@ -1,11 +1,12 @@
 import sqlite3
 import unittest
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 
 from event_radar.email_alert import dedupe_alerts_for_email
 from event_radar.event_strength import score_news_event_strength
+from event_radar.fundamental_check import build_fundamental_check
 from event_radar.models import (
     ClassifiedEvent,
     NewsEvent,
@@ -276,6 +277,88 @@ class EventRadarTests(unittest.TestCase):
         self.assertEqual(score_news_event_strength(weak), 25)
         self.assertGreaterEqual(score_news_event_strength(strong), 85)
 
+    def test_fundamental_check_rates_quality_and_valuation(self):
+        check = build_fundamental_check(
+            "MU",
+            {
+                "forwardPE": 14,
+                "pegRatio": 0.9,
+                "priceToSalesTrailing12Months": 3,
+                "priceToBook": 2.5,
+                "freeCashflow": 5_000_000_000,
+                "marketCap": 100_000_000_000,
+                "revenueGrowth": 0.18,
+                "earningsGrowth": 0.22,
+                "profitMargins": 0.20,
+                "operatingMargins": 0.24,
+                "returnOnEquity": 0.18,
+                "debtToEquity": 80,
+            },
+            check_date="2026-05-10",
+        )
+
+        self.assertIn(check.rating, {"A", "B"})
+        self.assertGreaterEqual(check.valuation_score, 5)
+        self.assertGreaterEqual(check.quality_score, 8)
+
+    def test_weak_fundamentals_cap_high_priority_alert(self):
+        conn = sqlite3.connect(":memory:")
+        _create_tables(conn)
+        repository = EventRepository(conn)
+        dates = pd.date_range("2026-01-01", periods=61, freq="D")
+
+        def prices(base, last_close, last_volume):
+            rows = []
+            for idx, _date in enumerate(dates):
+                close = base + idx * 0.1
+                rows.append(
+                    {
+                        "open": close,
+                        "high": close + 0.5,
+                        "low": close - 0.5,
+                        "close": close,
+                        "volume": 1000,
+                    }
+                )
+            rows[-1]["close"] = last_close
+            rows[-1]["high"] = last_close
+            rows[-1]["volume"] = last_volume
+            return pd.DataFrame(rows, index=dates)
+
+        upsert_prices(conn, prices(100, 120, 3000), "MU")
+        upsert_prices(conn, prices(100, 106, 1000), "SPY")
+        upsert_prices(conn, prices(100, 105, 1000), "QQQ")
+        repository.upsert_fundamental_check(
+            ticker="MU",
+            check_date="2026-05-10",
+            rating="D",
+            valuation_score=-1,
+            quality_score=1,
+            summary="rating=D; expensive and weak quality",
+            metrics={},
+            raw={},
+        )
+
+        check = confirm_alert(
+            alert=type(
+                "Pending",
+                (),
+                {
+                    "alert_id": 1,
+                    "ticker": "MU",
+                    "theme": "AI Memory Demand",
+                    "priority": "Info",
+                    "reason": "event reason",
+                },
+            )(),
+            repository=repository,
+            thresholds=TechnicalThresholds(high_priority_confirmations=3),
+        )
+
+        self.assertEqual(check.priority, "Watchlist")
+        self.assertEqual(check.technical_status, "confirmed")
+        self.assertIn("fundamental=D", check.reason)
+
     def test_performance_summary_groups_by_theme(self):
         conn = sqlite3.connect(":memory:")
         repository = EventRepository(conn)
@@ -373,13 +456,30 @@ class EventRadarTests(unittest.TestCase):
         self.assertIn("below MA20", results[0].reason)
         self.assertIn("underperforming SPY/QQQ over 20d", results[0].reason)
 
-    def _save_trend_candidate(self, repository, ticker):
+    def test_trend_archives_stale_candidates(self):
+        conn = sqlite3.connect(":memory:")
+        _create_tables(conn)
+        repository = EventRepository(conn)
+        old_date = (date.today() - timedelta(days=75)).isoformat()
+        self._save_trend_candidate(repository, ticker="NVDA", published_at=old_date)
+
+        results = update_trend_states(
+            repository,
+            thresholds=TrendThresholds(archived_no_news_days=60),
+            dry_run=True,
+        )
+
+        self.assertEqual(results[0].status, "Archived")
+        self.assertIn("no related alert", results[0].reason)
+
+    def _save_trend_candidate(self, repository, ticker, published_at=None):
+        published_at = published_at or date.today().isoformat()
         event_id = repository.save_event(
             ClassifiedEvent(
                 news=NewsEvent(
                     title="AI infrastructure demand",
                     url=f"https://example.test/{ticker}",
-                    published_at=date.today().isoformat(),
+                    published_at=published_at,
                 ),
                 matches=[
                     ThemeMatch(
@@ -410,8 +510,8 @@ class EventRadarTests(unittest.TestCase):
             )
         )
         repository.conn.execute(
-            "UPDATE radar_alerts SET technical_status='partial' WHERE ticker=?",
-            (ticker,),
+            "UPDATE radar_alerts SET technical_status='partial', alert_date=? WHERE ticker=?",
+            (published_at, ticker),
         )
         repository.conn.commit()
 

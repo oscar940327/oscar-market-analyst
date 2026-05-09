@@ -1,15 +1,23 @@
 name: Daily report
 
 on:
-  schedule:
-    - cron: "0 12 * * 1-5"  # UTC 12:00 週一到週五（台灣 20:00）
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      run_legacy_daily_report:
+        description: "Run the legacy daily report workflow from main"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
-  contents: write  # 允許 push 回 repo
+  contents: write
 
 jobs:
   run:
+    if: ${{ github.event.inputs.run_legacy_daily_report == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

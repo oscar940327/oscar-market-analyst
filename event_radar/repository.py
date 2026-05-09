@@ -10,6 +10,7 @@ from pipeline.db import get_connection
 from event_radar.models import (
     AlertDraft,
     ClassifiedEvent,
+    FundamentalSnapshot,
     PendingAlert,
     RadarAlert,
     TechnicalCheck,
@@ -90,6 +91,19 @@ def ensure_event_tables(conn: sqlite3.Connection) -> None:
             reason          TEXT,
             updated_at      TEXT NOT NULL,
             PRIMARY KEY(theme, ticker)
+        );
+
+        CREATE TABLE IF NOT EXISTS fundamental_checks (
+            ticker             TEXT NOT NULL,
+            check_date         TEXT NOT NULL,
+            rating             TEXT NOT NULL,
+            valuation_score    INTEGER NOT NULL,
+            quality_score      INTEGER NOT NULL,
+            summary            TEXT NOT NULL,
+            metrics_json       TEXT,
+            raw_json           TEXT,
+            updated_at         TEXT NOT NULL,
+            PRIMARY KEY(ticker, check_date)
         );
         """
     )
@@ -270,6 +284,68 @@ class EventRepository:
         )
         self.conn.commit()
 
+    def upsert_fundamental_check(
+        self,
+        ticker: str,
+        check_date: str,
+        rating: str,
+        valuation_score: int,
+        quality_score: int,
+        summary: str,
+        metrics: dict,
+        raw: dict,
+    ) -> None:
+        self.conn.execute(
+            """
+            INSERT INTO fundamental_checks
+                (ticker, check_date, rating, valuation_score, quality_score,
+                 summary, metrics_json, raw_json, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(ticker, check_date) DO UPDATE SET
+                rating=excluded.rating,
+                valuation_score=excluded.valuation_score,
+                quality_score=excluded.quality_score,
+                summary=excluded.summary,
+                metrics_json=excluded.metrics_json,
+                raw_json=excluded.raw_json,
+                updated_at=excluded.updated_at
+            """,
+            (
+                ticker.upper(),
+                check_date,
+                rating,
+                int(valuation_score),
+                int(quality_score),
+                summary,
+                json.dumps(metrics, ensure_ascii=False),
+                json.dumps(raw, ensure_ascii=False),
+                utc_now_iso(),
+            ),
+        )
+        self.conn.commit()
+
+    def load_latest_fundamental(self, ticker: str) -> FundamentalSnapshot | None:
+        row = self.conn.execute(
+            """
+            SELECT ticker, check_date, rating, valuation_score, quality_score, summary
+            FROM fundamental_checks
+            WHERE ticker=?
+            ORDER BY check_date DESC, updated_at DESC
+            LIMIT 1
+            """,
+            (ticker.upper(),),
+        ).fetchone()
+        if not row:
+            return None
+        return FundamentalSnapshot(
+            ticker=str(row[0]),
+            check_date=str(row[1]),
+            rating=str(row[2]),
+            valuation_score=int(row[3]),
+            quality_score=int(row[4]),
+            summary=str(row[5]),
+        )
+
     def load_unsent_alerts(
         self,
         limit: int = 50,
@@ -292,9 +368,17 @@ class EventRepository:
                 a.alert_id, a.event_id, a.alert_date, a.ticker, a.theme,
                 a.priority, a.reason, a.technical_status, a.close_price,
                 a.relative_strength, a.breakout, a.volume_ratio, a.raw_json,
-                e.title, e.source, e.url, e.published_at, e.direction
+                e.title, e.source, e.url, e.published_at, e.direction,
+                f.check_date, f.rating, f.valuation_score, f.quality_score, f.summary
             FROM radar_alerts a
             JOIN market_events e ON e.event_id = a.event_id
+            LEFT JOIN fundamental_checks f
+              ON f.ticker = a.ticker
+             AND f.check_date = (
+                SELECT MAX(f2.check_date)
+                FROM fundamental_checks f2
+                WHERE f2.ticker = a.ticker
+             )
             WHERE {' AND '.join(where)}
             ORDER BY
                 CASE a.priority
@@ -316,6 +400,14 @@ class EventRepository:
                     metadata = json.loads(str(row[12]))
                 except json.JSONDecodeError:
                     metadata = {}
+            if row[18] is not None:
+                metadata["fundamental"] = {
+                    "check_date": str(row[18]),
+                    "rating": str(row[19]),
+                    "valuation_score": int(row[20]),
+                    "quality_score": int(row[21]),
+                    "summary": str(row[22]),
+                }
             alerts.append(
                 RadarAlert(
                     alert_id=int(row[0]),

@@ -10,12 +10,14 @@ from event_radar.email_alert import (
     send_event_alert_email,
     send_trend_alert_email,
 )
+from event_radar.fundamental_check import update_fundamental_checks
 from event_radar.models import NewsEvent
 from event_radar.performance import (
     summarize_alert_performance,
     update_alert_performance,
 )
 from event_radar.price_update import update_radar_prices
+from event_radar.price_update import tickers_from_theme_map
 from event_radar.repository import EventRepository
 from event_radar.rss_scanner import fetch_rss_events
 from event_radar.service import classify_events, persist_classified_events
@@ -159,6 +161,11 @@ def main() -> None:
         help="Update local prices for theme-map tickers and SPY/QQQ",
     )
     parser.add_argument(
+        "--update-fundamentals",
+        action="store_true",
+        help="Update yfinance fundamental checks for theme-map tickers",
+    )
+    parser.add_argument(
         "--price-lookback-days",
         type=int,
         default=220,
@@ -292,6 +299,18 @@ def main() -> None:
 
             print("Step 3/4: Confirming technicals")
             daily_limit = max(args.limit, alert_count)
+            pending_alerts = repository.load_pending_alerts(limit=daily_limit)
+            tickers = [alert.ticker for alert in pending_alerts]
+            if tickers:
+                fundamental_results = update_fundamental_checks(
+                    repository,
+                    tickers=tickers,
+                    dry_run=False,
+                )
+                ratings = {}
+                for result in fundamental_results:
+                    ratings[result.rating] = ratings.get(result.rating, 0) + 1
+                print(f"Updated fundamentals: {len(fundamental_results)} {ratings}")
             technical_results = confirm_pending_alerts(
                 repository,
                 limit=daily_limit,
@@ -325,12 +344,35 @@ def main() -> None:
             repository.close()
         return
 
+    if args.update_fundamentals:
+        theme_map = load_theme_map()
+        tickers = tickers_from_theme_map(theme_map)
+        repository = EventRepository()
+        try:
+            results = update_fundamental_checks(
+                repository,
+                tickers=tickers,
+                dry_run=args.dry_run,
+            )
+        finally:
+            repository.close()
+        print(f"Fundamental checks: {len(results)}")
+        for result in results[:50]:
+            prefix = "dry-run " if args.dry_run else ""
+            print(
+                f"- {prefix}{result.ticker}: {result.rating} "
+                f"valuation={result.valuation_score} quality={result.quality_score}"
+            )
+            print(f"  {result.summary}")
+        return
+
     if args.update_trends:
         event_config = load_event_config()
         trend_config = event_config.get("trend_management", {})
         thresholds = TrendThresholds(
             cooling_no_news_days=int(trend_config.get("cooling_no_news_days", 5)),
             closed_no_news_days=int(trend_config.get("closed_no_news_days", 20)),
+            archived_no_news_days=int(trend_config.get("archived_no_news_days", 60)),
             cooling_drawdown_pct=float(trend_config.get("cooling_drawdown_pct", 0.08)),
             closed_drawdown_pct=float(trend_config.get("closed_drawdown_pct", 0.15)),
             cooling_min_signals=int(trend_config.get("cooling_min_signals", 2)),
@@ -564,6 +606,15 @@ def main() -> None:
         )
         repository = EventRepository()
         try:
+            pending_alerts = repository.load_pending_alerts(limit=args.limit)
+            tickers = [alert.ticker for alert in pending_alerts]
+            if tickers:
+                fundamental_results = update_fundamental_checks(
+                    repository,
+                    tickers=tickers,
+                    dry_run=args.dry_run,
+                )
+                print(f"Updated fundamentals: {len(fundamental_results)}")
             results = confirm_pending_alerts(
                 repository,
                 limit=args.limit,

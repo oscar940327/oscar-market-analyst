@@ -36,8 +36,11 @@ Completed:
 - Deterministic `theme_map.yaml` theme-to-ticker mapping.
 - SQLite tables for market events, radar alerts, alert performance, and trend states.
 - Technical confirmation using 20/55-day breakout, MA20, volume ratio, and relative strength versus SPY / QQQ.
+- Fundamental check using yfinance valuation and quality metrics.
+- Fundamental rating: `A / B / C / D / E / Unknown`.
+- Fundamental red-flag overlay that can cap alert priority.
 - Event Alert email format.
-- Trend state management: Active / Cooling / Closed.
+- Trend state management: Active / Cooling / Closed / Archived.
 - Trend Alert preview and optional sending.
 - Performance tracking and summary commands.
 - GitHub Actions automation.
@@ -51,6 +54,7 @@ Current automation:
 - Updates Trend state, but does **not** automatically send Trend Alert emails.
 - Updates alert performance when enough trading days have passed.
 - Commits updated radar state back to the repository database.
+- Leaves the legacy daily report workflow disabled on `main` unless it is explicitly run manually.
 
 ---
 
@@ -76,7 +80,8 @@ The email contains:
 - relative strength,
 - volume ratio,
 - alert reason,
-- reference stop-loss / take-profit / trailing-stop levels.
+- reference stop-loss / take-profit / trailing-stop levels,
+- fundamental rating and summary when available.
 
 ### Trend Alert
 
@@ -87,6 +92,7 @@ Trend state can become:
 - `Active`: theme/ticker is still worth tracking.
 - `Cooling`: multiple weakening signals are present.
 - `Closed`: stronger end-of-trend conditions are present.
+- `Archived`: no related alert has appeared for a longer period.
 
 Cooling currently requires multiple signals, such as:
 
@@ -234,6 +240,7 @@ event_radar/
   cli.py                      # Main Event Radar CLI
   config.py                   # YAML config loading
   email_alert.py              # Event and Trend email rendering/sending
+  fundamental_check.py        # yfinance valuation / quality rating
   llm_classifier.py           # OpenRouter LLM classification
   models.py                   # Data models
   performance.py              # Alert performance tracking and summaries
@@ -243,7 +250,7 @@ event_radar/
   service.py                  # Event classification and alert draft creation
   technical_confirmation.py   # Breakout / MA / volume / RS confirmation
   theme_mapper.py             # Keyword theme matching
-  trends.py                   # Active / Cooling / Closed trend states
+  trends.py                   # Active / Cooling / Closed / Archived trend states
 
 config/
   event_radar.yaml            # Radar thresholds and RSS sources
@@ -322,21 +329,21 @@ Near-term:
 - Review false positives and missed themes.
 - Tune `theme_map.yaml` and alert priority thresholds.
 - Decide whether Trend Alert emails should remain manual or become automated later.
-- Confirm `legacy-backtest` is pushed to GitHub as a remote branch.
+- Observe whether fundamental red-flag capping improves alert quality.
 
 Medium-term:
 
 - Build performance review reports from accumulated alert outcomes.
 - Rank themes by post-alert return and benchmark-relative return.
 - Rank technical conditions by usefulness.
+- Rank fundamental ratings by post-alert usefulness.
 - Add optional weekly summary email.
 - Add more reliable news sources if RSS quality is insufficient.
 
 Long-term:
 
-- Clean `main` so it is primarily Event Radar focused.
+- Remove or relocate legacy daily report/backtest code from `main` if you want a stricter Event Radar-only branch.
 - Keep old daily report/backtest code in `legacy-backtest`.
-- Add an Archived trend state.
 - Add richer event taxonomy and better duplicate-event clustering.
 - Validate whether Event Radar alerts produce useful research leads over time.
 

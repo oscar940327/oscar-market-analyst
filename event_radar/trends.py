@@ -23,6 +23,7 @@ class TrendStateResult:
 class TrendThresholds:
     cooling_no_news_days: int = 5
     closed_no_news_days: int = 20
+    archived_no_news_days: int = 60
     cooling_drawdown_pct: float = 0.08
     closed_drawdown_pct: float = 0.15
     cooling_min_signals: int = 2
@@ -80,10 +81,13 @@ def update_trend_states(
         high_watermark = None
         cooling_reasons = []
         closed_reasons = []
+        archived_reasons = []
         status = "Active"
 
         days_since_news = (today - date.fromisoformat(str(last_event_date))).days
-        if days_since_news >= thresholds.closed_no_news_days:
+        if days_since_news >= thresholds.archived_no_news_days:
+            archived_reasons.append(f"no related alert for {days_since_news} days")
+        elif days_since_news >= thresholds.closed_no_news_days:
             closed_reasons.append(f"no related alert for {days_since_news} days")
         elif days_since_news >= thresholds.cooling_no_news_days:
             cooling_reasons.append(f"no related alert for {days_since_news} days")
@@ -110,7 +114,10 @@ def update_trend_states(
 
         closed_signal_count = len(set(closed_reasons + cooling_reasons))
         cooling_signal_count = len(set(cooling_reasons))
-        if closed_signal_count >= thresholds.closed_min_signals and closed_reasons:
+        if archived_reasons:
+            status = "Archived"
+            reasons = archived_reasons
+        elif closed_signal_count >= thresholds.closed_min_signals and closed_reasons:
             status = "Closed"
             reasons = list(dict.fromkeys(closed_reasons + cooling_reasons))
         elif cooling_signal_count >= thresholds.cooling_min_signals:
