@@ -67,13 +67,34 @@ def _score_higher_better(value: float | None, good: float, fair: float, weak: fl
     return -1
 
 
-def _rating(valuation_score: int, quality_score: int) -> str:
+def _rating(
+    valuation_score: int,
+    quality_score: int,
+    fcf_yield: float | None,
+    free_cash_flow: float | None,
+    debt_to_equity: float | None,
+) -> str:
     total = valuation_score + quality_score
-    if total >= 8 and quality_score >= 4:
+    severe_cash_flow_problem = fcf_yield is not None and fcf_yield <= -0.10
+    weak_cash_flow = (
+        (fcf_yield is not None and fcf_yield < 0)
+        or (free_cash_flow is not None and free_cash_flow <= 0)
+    )
+    severe_debt_risk = debt_to_equity is not None and debt_to_equity > 400
+    debt_risk = debt_to_equity is not None and debt_to_equity > 200
+    very_expensive = valuation_score < 0
+
+    if severe_cash_flow_problem or severe_debt_risk or quality_score < 0:
+        return "E"
+    if weak_cash_flow and (very_expensive or quality_score < 4):
+        return "D"
+    if debt_risk and total < 5:
+        return "D"
+    if valuation_score >= 4 and quality_score >= 6 and not weak_cash_flow and not debt_risk:
         return "A"
-    if total >= 5 and quality_score >= 2:
+    if valuation_score >= 2 and quality_score >= 4 and not severe_cash_flow_problem:
         return "B"
-    if total >= 2:
+    if quality_score >= 5 and total >= 2:
         return "C"
     if total >= 0:
         return "D"
@@ -164,7 +185,13 @@ def build_fundamental_check(
             1 if free_cash_flow is not None and free_cash_flow > 0 else -1,
         ]
     )
-    rating = _rating(valuation_score, quality_score)
+    rating = _rating(
+        valuation_score,
+        quality_score,
+        fcf_yield=fcf_yield,
+        free_cash_flow=free_cash_flow,
+        debt_to_equity=debt_to_equity,
+    )
     summary = (
         f"rating={rating}; valuation_score={valuation_score}; "
         f"quality_score={quality_score}; forward_pe={_fmt_ratio(forward_pe)}; "

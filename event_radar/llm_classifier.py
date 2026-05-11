@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from event_radar.event_strength import score_news_event_strength
 from event_radar.models import NewsEvent, ThemeMatch
+from event_radar.theme_mapper import theme_tickers_and_tiers
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,7 +59,7 @@ def _theme_catalog(theme_map: dict[str, Any]) -> list[dict[str, Any]]:
                 "label": theme.get("label") or key,
                 "category": theme.get("category") or "General",
                 "direction": theme.get("direction") or "mixed",
-                "tickers": theme.get("tickers") or [],
+                "tickers": theme_tickers_and_tiers(theme)[0],
                 "keywords": theme.get("keywords") or [],
             }
         )
@@ -125,13 +126,15 @@ def classify_event_with_llm(
         if not theme:
             continue
 
-        base_tickers = [str(ticker).upper() for ticker in theme.get("tickers") or []]
+        base_tickers, ticker_tiers = theme_tickers_and_tiers(theme)
         extra_tickers = [
             str(ticker).upper()
             for ticker in item.get("extra_tickers") or []
             if re.fullmatch(r"[A-Z][A-Z0-9.]{0,5}", str(ticker).upper())
         ]
         tickers = sorted(set(base_tickers + extra_tickers))
+        for ticker in extra_tickers:
+            ticker_tiers.setdefault(ticker, "extended")
         confidence = max(0.0, min(1.0, float(item.get("confidence") or 0.0)))
         rationale = str(item.get("matched_rationale") or "llm_match").strip()
         direction = str(item.get("direction") or theme.get("direction") or "mixed")
@@ -146,6 +149,7 @@ def classify_event_with_llm(
                 direction=direction,
                 confidence=round(confidence, 2),
                 event_strength=event_strength,
+                ticker_tiers=ticker_tiers,
             )
         )
 

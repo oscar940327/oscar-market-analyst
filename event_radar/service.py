@@ -65,6 +65,7 @@ def build_alert_drafts(
         )
 
         for ticker in match.tickers:
+            ticker = ticker.upper()
             alerts.append(
                 AlertDraft(
                     event_id=event_id,
@@ -78,6 +79,7 @@ def build_alert_drafts(
                         "matched_keywords": match.matched_keywords,
                         "theme_score": match.score,
                         "news_event_strength": match.event_strength,
+                        "ticker_tier": match.ticker_tiers.get(ticker, "core"),
                     },
                 )
             )

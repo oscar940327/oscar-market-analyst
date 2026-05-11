@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from event_radar.config import load_theme_map
+from event_radar.theme_mapper import theme_tickers_and_tiers
 from perception.price_fetcher import fetch_ohlcv
 from pipeline.db import get_connection, upsert_prices
 
@@ -23,8 +24,8 @@ def tickers_from_theme_map(theme_map: dict[str, Any] | None = None) -> list[str]
     theme_map = theme_map or load_theme_map()
     tickers = {"SPY", "QQQ"}
     for theme in (theme_map.get("themes") or {}).values():
-        for ticker in theme.get("tickers") or []:
-            tickers.add(str(ticker).upper())
+        for ticker in theme_tickers_and_tiers(theme)[0]:
+            tickers.add(ticker)
     return sorted(tickers)
 
 

@@ -129,6 +129,16 @@ def _ensure_column(
         conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
 
 
+def _load_json_object(value: object) -> dict:
+    if not value:
+        return {}
+    try:
+        data = json.loads(str(value))
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 class EventRepository:
     def __init__(self, conn: sqlite3.Connection | None = None):
         self.conn = conn or get_connection()
@@ -149,6 +159,7 @@ class EventRepository:
                     "score": match.score,
                     "direction": match.direction,
                     "confidence": match.confidence,
+                    "ticker_tiers": match.ticker_tiers,
                 }
                 for match in classified.matches
             ]
@@ -231,7 +242,7 @@ class EventRepository:
     def load_pending_alerts(self, limit: int = 100) -> list[PendingAlert]:
         rows = self.conn.execute(
             """
-            SELECT alert_id, event_id, ticker, theme, priority, reason
+            SELECT alert_id, event_id, ticker, theme, priority, reason, raw_json
             FROM radar_alerts
             WHERE status='open' AND technical_status='pending'
             ORDER BY alert_id
@@ -247,6 +258,7 @@ class EventRepository:
                 theme=str(row[3]),
                 priority=str(row[4]),
                 reason=str(row[5]),
+                metadata=_load_json_object(row[6]),
             )
             for row in rows
         ]
@@ -454,7 +466,7 @@ class EventRepository:
     def load_alerts_for_performance(self, limit: int = 200) -> list[PendingAlert]:
         rows = self.conn.execute(
             """
-            SELECT alert_id, event_id, ticker, theme, priority, reason
+            SELECT alert_id, event_id, ticker, theme, priority, reason, raw_json
             FROM radar_alerts
             WHERE status='open'
               AND close_price IS NOT NULL
@@ -472,6 +484,7 @@ class EventRepository:
                 theme=str(row[3]),
                 priority=str(row[4]),
                 reason=str(row[5]),
+                metadata=_load_json_object(row[6]),
             )
             for row in rows
         ]

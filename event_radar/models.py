@@ -32,6 +32,7 @@ class ThemeMatch:
     direction: str = "mixed"
     confidence: float = 0.0
     event_strength: int = 100
+    ticker_tiers: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,7 @@ class PendingAlert:
     theme: str
     priority: str
     reason: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

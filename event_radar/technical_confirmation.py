@@ -45,13 +45,17 @@ def _apply_fundamental_overlay(
         "summary": fundamental.summary,
     }
 
-    if fundamental.rating == "E":
-        priority = "Info"
-        technical_status = "unconfirmed"
-        reason += "; priority capped by weak fundamentals"
-    elif fundamental.rating == "D" and priority == "High Priority":
+    if fundamental.rating == "E" and priority == "High Priority":
         priority = "Watchlist"
-        reason += "; high priority capped by weak fundamentals"
+        reason += "; high priority capped by very weak fundamentals"
+    elif fundamental.rating == "D":
+        if priority == "High Priority":
+            priority = "Strong Watchlist"
+        elif priority == "Strong Watchlist":
+            priority = "Watchlist"
+        reason += "; priority downgraded by weak fundamentals"
+    elif fundamental.rating == "C":
+        reason += "; elevated valuation risk noted"
 
     return TechnicalCheck(
         ticker=check.ticker,
@@ -90,6 +94,23 @@ def _relative_strength(
     if ticker_return is None or not benchmarks:
         return None
     return ticker_return - max(benchmarks)
+
+
+def _alert_event_strength(alert: PendingAlert) -> int:
+    metadata = getattr(alert, "metadata", {}) or {}
+    value = metadata.get("news_event_strength")
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 50
+
+
+def _alert_ticker_tier(alert: PendingAlert) -> str:
+    metadata = getattr(alert, "metadata", {}) or {}
+    tier = str(metadata.get("ticker_tier") or "core").lower()
+    if tier not in {"core", "secondary", "extended"}:
+        return "core"
+    return tier
 
 
 def confirm_alert(
@@ -155,7 +176,19 @@ def confirm_alert(
         priority = "High Priority"
         technical_status = "confirmed"
     elif confirmation_count >= thresholds.watchlist_confirmations:
-        priority = "Watchlist"
+        event_strength = _alert_event_strength(alert)
+        ticker_tier = _alert_ticker_tier(alert)
+        if event_strength < 40:
+            priority = "Weak Watchlist"
+        elif ticker_tier == "extended" and confirmation_count < thresholds.high_priority_confirmations:
+            priority = "Weak Watchlist"
+        elif (
+            event_strength >= 60
+            and confirmation_count >= thresholds.high_priority_confirmations
+        ):
+            priority = "Strong Watchlist"
+        else:
+            priority = "Watchlist"
         technical_status = "partial"
     else:
         priority = "Info"
@@ -194,6 +227,8 @@ def confirm_alert(
         volume_ratio=round(volume_ratio, 2) if volume_ratio is not None else None,
         reason=f"{alert.reason}; {'; '.join(details)}; {'; '.join(risk_details)}",
         metadata={
+            "news_event_strength": _alert_event_strength(alert),
+            "ticker_tier": _alert_ticker_tier(alert),
             "close": close,
             "high_20": high_20,
             "high_55": high_55,

@@ -6,7 +6,7 @@ from event_radar.config import load_event_config, load_theme_map
 from event_radar.email_alert import (
     build_alert_subject,
     build_trend_alert_subject,
-    dedupe_alerts_for_email,
+    filter_alerts_for_email,
     send_event_alert_email,
     send_trend_alert_email,
 )
@@ -67,7 +67,7 @@ def _load_unsent_email_alerts(
     include_info_alerts: bool = False,
     include_unconfirmed_alerts: bool = False,
 ):
-    priorities = {"High Priority", "Watchlist"}
+    priorities = {"High Priority", "Strong Watchlist", "Watchlist"}
     if include_info_alerts:
         priorities.add("Info")
     return repository.load_unsent_alerts(
@@ -78,10 +78,10 @@ def _load_unsent_email_alerts(
 
 
 def _print_email_preview(alerts) -> list:
-    display_alerts = dedupe_alerts_for_email(alerts)
+    display_alerts = filter_alerts_for_email(alerts)
     print(f"Unsent email alerts: {len(alerts)}")
     if len(display_alerts) != len(alerts):
-        print(f"Email rows after dedupe: {len(display_alerts)}")
+        print(f"Email rows after filters/dedupe: {len(display_alerts)}")
     if display_alerts:
         print(f"Subject: {build_alert_subject(display_alerts)}")
         for alert in display_alerts[:20]:
@@ -334,7 +334,7 @@ def main() -> None:
 
             if display_alerts and send_event_alert_email(display_alerts):
                 marked = repository.mark_alerts_sent(
-                    [alert.alert_id for alert in alerts],
+                    [alert.alert_id for alert in display_alerts],
                     channel="email",
                 )
                 print(f"Marked alerts sent: {marked}")
@@ -516,7 +516,7 @@ def main() -> None:
         return
 
     if args.send_email_alerts:
-        priorities = {"High Priority", "Watchlist"}
+        priorities = {"High Priority", "Strong Watchlist", "Watchlist"}
         if args.include_info_alerts:
             priorities.add("Info")
 
@@ -527,10 +527,10 @@ def main() -> None:
                 priorities=priorities,
                 include_unconfirmed=args.include_unconfirmed_alerts,
             )
-            display_alerts = dedupe_alerts_for_email(alerts)
+            display_alerts = filter_alerts_for_email(alerts)
             print(f"Unsent email alerts: {len(alerts)}")
             if len(display_alerts) != len(alerts):
-                print(f"Email rows after dedupe: {len(display_alerts)}")
+                print(f"Email rows after filters/dedupe: {len(display_alerts)}")
             if display_alerts:
                 print(f"Subject: {build_alert_subject(display_alerts)}")
                 for alert in display_alerts[:20]:
@@ -544,7 +544,7 @@ def main() -> None:
 
             if send_event_alert_email(display_alerts):
                 marked = repository.mark_alerts_sent(
-                    [alert.alert_id for alert in alerts],
+                    [alert.alert_id for alert in display_alerts],
                     channel="email",
                 )
                 print(f"Marked alerts sent: {marked}")

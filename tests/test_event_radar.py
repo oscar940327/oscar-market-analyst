@@ -4,7 +4,11 @@ from datetime import date, timedelta
 
 import pandas as pd
 
-from event_radar.email_alert import dedupe_alerts_for_email
+from event_radar.email_alert import (
+    build_alert_email,
+    dedupe_alerts_for_email,
+    filter_alerts_for_email,
+)
 from event_radar.event_strength import score_news_event_strength
 from event_radar.fundamental_check import build_fundamental_check
 from event_radar.models import (
@@ -52,7 +56,8 @@ class EventRadarTests(unittest.TestCase):
                     "label": "AI Memory Demand",
                     "category": "Semiconductor",
                     "direction": "bullish",
-                    "tickers": ["MU", "WDC"],
+                    "core": ["MU"],
+                    "secondary": ["WDC"],
                     "keywords": ["AI server", "HBM", "DRAM"],
                 }
             }
@@ -67,6 +72,7 @@ class EventRadarTests(unittest.TestCase):
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].theme, "AI Memory Demand")
         self.assertEqual(matches[0].tickers, ["MU", "WDC"])
+        self.assertEqual(matches[0].ticker_tiers, {"MU": "core", "WDC": "secondary"})
         self.assertEqual(matches[0].score, 3)
 
     def test_alert_drafts_use_match_priority_thresholds(self):
@@ -108,6 +114,25 @@ class EventRadarTests(unittest.TestCase):
         self.assertEqual(len(deduped), 2)
         self.assertEqual(deduped[0].alert_id, 2)
         self.assertEqual({alert.ticker for alert in deduped}, {"NVDA", "AMD"})
+
+    def test_email_filters_low_strength_and_groups_by_event(self):
+        low = _radar_alert(1, "AI Compute Capex", "NVDA", "Watchlist", "partial")
+        visible = _radar_alert(2, "AI Compute Capex", "AMD", "Watchlist", "partial")
+        secondary = _radar_alert(3, "AI Compute Capex", "SMCI", "Strong Watchlist", "partial")
+        low.metadata["news_event_strength"] = 25
+        visible.metadata["news_event_strength"] = 50
+        visible.metadata["ticker_tier"] = "core"
+        secondary.metadata["news_event_strength"] = 50
+        secondary.metadata["ticker_tier"] = "secondary"
+
+        filtered = filter_alerts_for_email([low, visible, secondary])
+        html = build_alert_email([low, visible, secondary], report_date="2026-05-10")
+
+        self.assertEqual({alert.ticker for alert in filtered}, {"AMD", "SMCI"})
+        self.assertEqual(html.count("AI Compute Capex"), 2)
+        self.assertIn("今日重點", html)
+        self.assertIn("事件強度低於 60", html)
+        self.assertNotIn("NVDA", html)
 
     def test_repository_dedupes_events_and_alerts(self):
         conn = sqlite3.connect(":memory:")
@@ -301,6 +326,28 @@ class EventRadarTests(unittest.TestCase):
         self.assertGreaterEqual(check.valuation_score, 5)
         self.assertGreaterEqual(check.quality_score, 8)
 
+    def test_fundamental_check_blocks_a_with_deep_negative_fcf_yield(self):
+        check = build_fundamental_check(
+            "SMCI",
+            {
+                "forwardPE": 14,
+                "pegRatio": 0.9,
+                "priceToSalesTrailing12Months": 3,
+                "priceToBook": 2.5,
+                "freeCashflow": -35_000_000_000,
+                "marketCap": 100_000_000_000,
+                "revenueGrowth": 0.45,
+                "earningsGrowth": 0.50,
+                "profitMargins": 0.20,
+                "operatingMargins": 0.24,
+                "returnOnEquity": 0.18,
+                "debtToEquity": 80,
+            },
+            check_date="2026-05-10",
+        )
+
+        self.assertEqual(check.rating, "E")
+
     def test_weak_fundamentals_cap_high_priority_alert(self):
         conn = sqlite3.connect(":memory:")
         _create_tables(conn)
@@ -355,7 +402,7 @@ class EventRadarTests(unittest.TestCase):
             thresholds=TechnicalThresholds(high_priority_confirmations=3),
         )
 
-        self.assertEqual(check.priority, "Watchlist")
+        self.assertEqual(check.priority, "Strong Watchlist")
         self.assertEqual(check.technical_status, "confirmed")
         self.assertIn("fundamental=D", check.reason)
 

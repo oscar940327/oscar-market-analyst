@@ -3,7 +3,9 @@ themes:
     category: Semiconductor
     label: AI Memory Demand
     direction: bullish
-    tickers: [MU, SNDK, WDC, NVDA, AVGO]
+    core: [MU, WDC, SNDK]
+    secondary: [NVDA, AVGO]
+    extended: []
     keywords:
       - ai server
       - hbm
@@ -17,7 +19,9 @@ themes:
     category: Semiconductor
     label: AI Compute Capex
     direction: bullish
-    tickers: [NVDA, AMD, AVGO, TSM, MSFT, META, SMCI, DELL, HPE, SMH]
+    core: [NVDA, AMD, SMH]
+    secondary: [AVGO, DELL, SMCI]
+    extended: [HPE, TSM, QQQ, MSFT, META]
     keywords:
       - ai capex
       - gpu demand
@@ -30,7 +34,9 @@ themes:
     category: AI Infrastructure
     label: AI Server Hardware
     direction: bullish
-    tickers: [SMCI, DELL, HPE, NVDA, AMD, AVGO, MU, WDC]
+    core: [SMCI, DELL]
+    secondary: [HPE, NVDA, AMD]
+    extended: [AVGO, MU, WDC]
     keywords:
       - supermicro
       - supermicro stock
@@ -49,7 +55,9 @@ themes:
     category: Semiconductor
     label: Semiconductor Earnings Momentum
     direction: bullish
-    tickers: [AMD, NVDA, AVGO, TSM, MU, SMH, QQQ]
+    core: [AMD, NVDA, SMH]
+    secondary: [AVGO, TSM, MU]
+    extended: [QQQ]
     keywords:
       - chip stocks
       - semiconductor earnings
@@ -64,7 +72,9 @@ themes:
     category: Energy
     label: Oil Supply Risk
     direction: mixed
-    tickers: [XOM, CVX, OXY, SLB, HAL, XLE, USO]
+    core: [USO, XLE]
+    secondary: [XOM, CVX, OXY]
+    extended: [SLB, HAL]
     keywords:
       - oil supply
       - crude disruption
@@ -77,7 +87,9 @@ themes:
     category: Macro
     label: Middle East De-escalation
     direction: mixed
-    tickers: [USO, XLE, XOM, CVX, OXY, DAL, UAL, AAL, GLD, SLV]
+    core: [USO, XLE]
+    secondary: [XOM, CVX, OXY, GLD]
+    extended: [DAL, UAL, AAL, SLV]
     keywords:
       - iran peace deal
       - us-iran deal
@@ -91,7 +103,9 @@ themes:
     category: Commodities
     label: Precious Metals Safe Haven
     direction: bullish
-    tickers: [GLD, SLV, GOLD, NEM, AEM, PAAS]
+    core: [GLD, SLV]
+    secondary: [GOLD, NEM]
+    extended: [AEM, PAAS]
     keywords:
       - gold jumps
       - silver jumps
@@ -105,7 +119,9 @@ themes:
     category: Macro
     label: Rate Cut Growth
     direction: bullish
-    tickers: [QQQ, TLT, MSFT, NVDA, AMD, SOFI]
+    core: [QQQ, TLT]
+    secondary: [MSFT, NVDA, AMD]
+    extended: [SOFI]
     keywords:
       - rate cut
       - dovish fed
@@ -118,7 +134,9 @@ themes:
     category: Macro
     label: Rate Hike Pressure
     direction: bearish
-    tickers: [QQQ, TLT, SOFI, AAPL, MSFT]
+    core: [QQQ, TLT]
+    secondary: [AAPL, MSFT]
+    extended: [SOFI]
     keywords:
       - rate hike
       - hawkish fed
@@ -131,7 +149,9 @@ themes:
     category: Cybersecurity
     label: Cybersecurity Incident
     direction: mixed
-    tickers: [CRWD, PANW, ZS, FTNT]
+    core: [CRWD, PANW]
+    secondary: [ZS]
+    extended: [FTNT]
     keywords:
       - cybersecurity breach
       - ransomware
@@ -144,7 +164,9 @@ themes:
     category: Space
     label: Space Launch Contract
     direction: bullish
-    tickers: [RKLB, LUNR, BA, LMT]
+    core: [RKLB, LUNR]
+    secondary: [BA, LMT]
+    extended: []
     keywords:
       - launch contract
       - satellite launch
@@ -156,7 +178,9 @@ themes:
     category: Financials
     label: Fintech Credit Risk
     direction: bearish
-    tickers: [SOFI, AFRM, UPST, PYPL]
+    core: [SOFI, AFRM]
+    secondary: [UPST]
+    extended: [PYPL]
     keywords:
       - delinquency
       - credit loss
@@ -168,7 +192,9 @@ themes:
     category: Crypto
     label: Crypto Exchange Momentum
     direction: mixed
-    tickers: [COIN, MSTR, BTC-USD, ETH-USD, HOOD, IBIT]
+    core: [COIN, BTC-USD, IBIT]
+    secondary: [MSTR, ETH-USD]
+    extended: [HOOD]
     keywords:
       - coinbase
       - crypto exchange
@@ -182,7 +208,9 @@ themes:
     category: Consumer
     label: Consumer Discretionary Earnings
     direction: mixed
-    tickers: [WMT, UBER, MAR, DIS, MCD, QQQ]
+    core: [WMT, UBER, DIS]
+    secondary: [MAR, MCD]
+    extended: [QQQ]
     keywords:
       - earnings top estimates
       - earnings call summary
